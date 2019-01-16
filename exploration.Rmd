@@ -1,0 +1,98 @@
+---
+title: "healthExploration"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+
+```
+
+```{r}
+#reading in all .XPT SAS files from NHANES_DATA folder 
+nhanes_file_names <- list.files(path = "NHANES_DATA")
+for(i in 1:length(nhanes_file_names))
+{
+  assign(paste(nhanes_file_names[i]), sasxport.get(paste0("NHANES_DATA/", nhanes_file_names[i])))
+}
+```
+
+```{r}
+#merging all data frames
+total <- eval(as.name(nhanes_file_names[1]))
+for(i in 2:length(nhanes_file_names))
+{
+  total <- merge(total,eval(as.name(nhanes_file_names[i])),by=c("seqn")) 
+}
+
+```
+
+
+```{r}
+#### selecting out variables related to high bloodpressure: 
+#### cut pad680,alq130
+cluster_frame <- total %>%
+      select(riagendr,ridageyr,bpxsy1,bpxdi1,lbxtc,bmxbmi,dr1tpota,dr1tsodi) 
+
+###removing missing values 
+cluster_frame <- na.omit(cluster_frame)
+```
+
+```{r}
+#### Looking at best number of Clusters:
+
+#### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
+wss = list(10)
+for (k in 2:10){ 
+  wss[k] = sum(kmeans(cluster_frame[,-1], k, nstart=10)$tot.withinss)
+}
+
+### plot results 
+plot(2:10, wss[2:10], type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+```
+
+```{r}
+#### creating clusters and labeling 
+kmeans_fit = kmeans(cluster_frame, 4)
+#kmeans_fit$centers
+#kmeans_fit$size
+cluster_frame$cluster <- as.factor(kmeans_fit$cluster)
+```
+
+
+```{r}
+autoplot(principal_comp, loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3)
+
+
+
+ggplot(cluster_frame, aes(x=dr1tpota, y=bmxbmi, color=cluster)) +
+    geom_point(shape=1) 
+```
+
+```{r}
+#### principal componant for visual 
+principal_comp <- prcomp(cluster_frame[,-c(1,9)],scale.=TRUE)
+round(principal_comp$rotation[,1:2],2) 
+
+#### plotting visual 
+autoplot(principal_comp, data = cluster_frame, colour = 'cluster')
+
+```
+
+```{r}
+groupa <- cluster_frame %>% filter(cluster == 1)
+groupb <- cluster_frame %>% filter(cluster == 2)
+groupc <- cluster_frame %>% filter(cluster == 3)
+groupd <- cluster_frame %>% filter(cluster == 4)
+
+t.test(groupa$bpxsy1,groupb$bpxsy1)
+```
+
