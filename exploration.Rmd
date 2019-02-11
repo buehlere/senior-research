@@ -36,9 +36,10 @@ for(i in 2:length(nhanes_file_names))
 
 ```{r}
 #### selecting out variables related to high bloodpressure: 
-#### cut pad680,alq130
+#### cut pad680,alq130,
 cluster_frame <- total %>%
-      select(riagendr,ridageyr,bpxsy1,bpxdi1,lbxtc,bmxbmi,dr1tpota,dr1tsodi) 
+      select(riagendr,ridageyr,bpxsy1,bpxdi1,lbxtc,bmxbmi,dr1tpota,dr1tsodi) %>% 
+      filter(bpxsy1 != 0)
 
 ###removing missing values 
 cluster_frame <- na.omit(cluster_frame)
@@ -71,10 +72,6 @@ cluster_frame$cluster <- as.factor(kmeans_fit$cluster)
 autoplot(principal_comp, loadings = TRUE, loadings.colour = 'blue',
          loadings.label = TRUE, loadings.label.size = 3)
 
-
-
-ggplot(cluster_frame, aes(x=dr1tpota, y=bmxbmi, color=cluster)) +
-    geom_point(shape=1) 
 ```
 
 ```{r}
@@ -85,6 +82,10 @@ round(principal_comp$rotation[,1:2],2)
 #### plotting visual 
 autoplot(principal_comp, data = cluster_frame, colour = 'cluster')
 
+ggplot(cluster_frame, aes(x=dr1tpota, y=dr1tsodi, color=cluster)) +
+    geom_point(shape=1) 
+
+#per cal, hdl cholesteral, ldl cholesteral, diabetes, SMQ040
 ```
 
 ```{r}
@@ -95,4 +96,5 @@ groupd <- cluster_frame %>% filter(cluster == 4)
 
 t.test(groupa$bpxsy1,groupb$bpxsy1)
 ```
+
 
