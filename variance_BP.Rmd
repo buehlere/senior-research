@@ -5,15 +5,54 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(caret) 
 library(ggplot2)
 library(dplyr)
 library(readr)
 library(Hmisc)
-library(ggfortify)
+
 ```
 
 ```{r}
+#reading in all .XPT SAS files from NHANES_DATA folder 
+nhanes_file_names <- list.files(path = "NHANES_DATA")
+for(i in 1:length(nhanes_file_names))
+{
+  assign(paste(nhanes_file_names[i]), sasxport.get(paste0("NHANES_DATA/", nhanes_file_names[i])))
+}
+```
 
+```{r}
+#merging all data frames
+total <- eval(as.name(nhanes_file_names[1]))
+for(i in 2:length(nhanes_file_names))
+{
+  total <- merge(total,eval(as.name(nhanes_file_names[i])),by=c("seqn")) 
+}
+
+```
+
+
+
+```{r}
+#selecting blood pressure columns 
+bp <- bloodpressure.XPT
+bp_columns <- grep("bpxsy[1-3]|bpxdi[1-3]", names(bp), ignore.case=T)
+bp <- bp[,bp_columns]
+
+#dropping NAs 
+bp <- na.omit(bp)
+
+#calculating mean column 
+bp$dia_mean <- rowMeans(bp[,c(2,4,6)])
+bp$sys_mean <- rowMeans(bp[,c(1,3,5)])
+
+#Looking at variance 
+cov(bp)
+
+```
+
+```{r}
+ggplot(bp, aes(x=dia_mean, y=sys_mean)) +
+    geom_point(shape=1) 
 ```
 
