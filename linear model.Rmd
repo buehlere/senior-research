@@ -1,0 +1,135 @@
+---
+title: "linear_model"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(matrixStats)
+library(leaps)
+```
+
+
+```{r}
+#### extracting likely variables 
+
+#### DV: Blood Pressure 
+#### calculating mean 
+bloodpressure.XPT$dia_mean <- rowMeans(bloodpressure.XPT[,c("bpxdi1","bpxdi2","bpxdi3")])
+bloodpressure.XPT$sys_mean <- rowMeans(bloodpressure.XPT[,c("bpxsy1","bpxsy2","bpxsy3")])
+
+dv_bp <- bloodpressure.XPT %>% select(seqn,dia_mean,sys_mean,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
+
+#### IV: BMI Info 
+bmi_variables <- body_measure.XPT %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
+
+#### IV: Demographic 
+demo_variables <- demographic.XPT %>% select(seqn,riagendr, ridageyr)
+
+#### IV: Diabetes 
+dia_variables <- diabetes.XPT %>% select(seqn,diq010)
+
+#### IV: Cholesteral 
+high_chol_variables <- high_cholesterol.XPT %>% select(seqn,lbdhdd)
+low_chol_variables <- low_cholesterol.XPT %>% select(seqn,lbdldl)
+total_chol_variables <- cholesterol.XPT %>% select(seqn,lbxtc)
+
+
+#### IV: Smoking 
+smoking_variables <- cigs.XPT %>% select(seqn,smq040)
+### recode: 
+smoking_variables$smoker <- smoking_variables$smq040
+smoking_variables$smq040 <- NULL 
+smoking_variables <- smoking_variables %>% mutate(smoker = ifelse(smoker < 3,1,0))
+
+
+
+####IV: glucose 
+glu_variables <- glucose.XPT %>% select(seqn,lbxglu)
+
+####merge 
+lin_frame <- dv_bp 
+variables <- c("bmi_variables","demo_variables","dia_variables","high_chol_variables","low_chol_variables","total_chol_variables","glu_variables")
+for(i in 1:length(variables))
+{
+  lin_frame <- merge(lin_frame,eval(as.name(variables[i])),by=c("seqn"))
+}
+summary(lin_frame)
+```
+
+```{r}
+####additional cleaning 
+lin_frame_clean$bmxrecum <- NULL 
+lin_frame_clean <- na.omit(lin_frame_clean)
+lin_frame_bps <- lin_frame_clean
+lin_frame_clean <- subset(lin_frame, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 
+```
+
+
+```{r}
+####variable inspection 
+cor(lin_frame_clean)
+```
+
+
+```{r}
+#### Systolic prediction 
+#### correlation
+sys_lin <- subset(lin_frame_clean, select=-c(dia_mean))
+cor(sys_lin)
+
+#### linear regression
+
+bpsys_linear1 = lm(sys_mean~.,sys_lin)
+summary(bpsys_linear1)
+
+#### residual assumption 
+hist(bpsys_linear1$residuals)
+plot(bpsys_linear1$fitted.values,bpsys_linear1$residuals)
+
+#### prediction 
+sys_predictions = predict(bpsys_linear1, newdata = lin_frame_clean)
+summary(sys_predictions)
+summary(lin_frame_clean$sys_mean)
+mse_sys <- (lin_frame_clean$sys_mean - sys_predictions)^2
+```
+
+```{r}
+#### Diastolic prediction 
+#### correlation
+dia_lin <- lin_frame_clean
+cor(dia_lin)
+
+#### linear regression
+
+bpdia_linear1 = lm(dia_mean~.,dia_lin)
+summary(bpdia_linear1)
+
+#### residual assumption 
+hist(bpdia_linear1$residuals)
+plot(bpdia_linear1$fitted.values,bpdia_linear1$residuals)
+
+#### prediction 
+#### swapping in sys predictions for "true"
+lin_frame_clean_sys <- lin_frame_clean
+lin_frame_clean_sys$sys_mean <- sys_predictions
+
+#### prediction 
+dia_predictions = predict(bpdia_linear1, newdata = lin_frame_clean_sys)
+summary(dia_predictions)
+summary(lin_frame_clean$dia_mean)
+mse_dia <- (lin_frame_clean$dia_mean - dia_predictions)^2
+
+```
+
+```{r}
+
+mses <- data.frame(mse_d = mse_dia,mse_s = mse_sys)
+plot(mses)
+```
+
+
