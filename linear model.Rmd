@@ -8,9 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(dplyr)
 library(readr)
-library(Hmisc)
 library(matrixStats)
-library(leaps)
+library(reshape2)
 ```
 
 
@@ -62,11 +61,15 @@ summary(lin_frame)
 ```
 
 ```{r}
-####additional cleaning 
-lin_frame_clean$bmxrecum <- NULL 
-lin_frame_clean <- na.omit(lin_frame_clean)
-lin_frame_bps <- lin_frame_clean
+####Prediction Frame 
+lin_frame$bmxrecum <- NULL 
 lin_frame_clean <- subset(lin_frame, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 
+lin_frame_clean <- na.omit(lin_frame_clean)
+summary(lin_frame_clean)
+
+#### Blood Pressure Frame 
+lin_frame_bp <- na.omit(lin_frame)
+summary(lin_frame_bp)
 ```
 
 
@@ -81,55 +84,142 @@ cor(lin_frame_clean)
 #### correlation
 sys_lin <- subset(lin_frame_clean, select=-c(dia_mean))
 cor(sys_lin)
-
-#### linear regression
+#### model 1: linear regression
 
 bpsys_linear1 = lm(sys_mean~.,sys_lin)
 summary(bpsys_linear1)
 
-#### residual assumption 
-hist(bpsys_linear1$residuals)
-plot(bpsys_linear1$fitted.values,bpsys_linear1$residuals)
+  #### residual assumption 
+  hist(bpsys_linear1$residuals)
+  plot(bpsys_linear1$fitted.values,bpsys_linear1$residuals)
+
+#### model 2: linear regression
+
+bpsys_linear2 = lm(sys_mean~bmxarml + bmxsad1 + bmxwaist + riagendr + ridageyr + lbdldl + lbxtc + lbxglu,sys_lin)
+summary(bpsys_linear2)
+
+  #### residual assumption 
+  hist(bpsys_linear2$residuals)
+  plot(bpsys_linear2$fitted.values,bpsys_linear2$residuals)
+
+
 
 #### prediction 
-sys_predictions = predict(bpsys_linear1, newdata = lin_frame_clean)
+sys_predictions = predict(bpsys_linear2, newdata = lin_frame_clean)
 summary(sys_predictions)
 summary(lin_frame_clean$sys_mean)
-mse_sys <- (lin_frame_clean$sys_mean - sys_predictions)^2
+
+### MSE data frame 
+mse <- data.frame(predict_sys_mse = (lin_frame_clean$sys_mean - sys_predictions)^2, predicted_sys = sys_predictions,true_sys = lin_frame_bp$sys_mean, first_sys = lin_frame_bp$bpxsy1, first_sys_mse = (lin_frame_clean$sys_mean - lin_frame_bp$bpxsy1)^2 ) 
+
 ```
 
 ```{r}
 #### Diastolic prediction 
 #### correlation
-dia_lin <- lin_frame_clean
+dia_lin <- subset(lin_frame_clean, select=-c(sys_mean))
 cor(dia_lin)
 
-#### linear regression
+#### model 1: linear regression
 
 bpdia_linear1 = lm(dia_mean~.,dia_lin)
 summary(bpdia_linear1)
 
-#### residual assumption 
-hist(bpdia_linear1$residuals)
-plot(bpdia_linear1$fitted.values,bpdia_linear1$residuals)
+  #### residual assumption 
+  hist(bpdia_linear1$residuals)
+  plot(bpdia_linear1$fitted.values,bpdia_linear1$residuals)
+
+  
+#### model 2: linear regression
+bpdia_linear2 = lm(dia_mean~bmxarmc + bmxht + diq010 + lbdldl + lbxtc,dia_lin)
+summary(bpdia_linear2)
+
+  #### residual assumption 
+  hist(bpdia_linear2$residuals)
+  plot(bpdia_linear2$fitted.values,bpdia_linear2$residuals)
+
+  
+#### model 3 with sys: linear regression
+bpdia_linear3 = lm(dia_mean~.,lin_frame_clean)
+summary(bpdia_linear1)
+
+  #### residual assumption 
+  hist(bpdia_linear3$residuals)
+  plot(bpdia_linear3$fitted.values,bpdia_linear1$residuals)
+  
+#### model 4 with sys: linear regression
+bpdia_linear4 = lm(dia_mean~sys_mean + bmxarmc + bmxarml + bmxht + riagendr + ridageyr + lbxtc,lin_frame_clean)
+summary(bpdia_linear4)
+
+  #### residual assumption 
+  hist(bpdia_linear4$residuals)
+  plot(bpdia_linear4$fitted.values,bpdia_linear1$residuals)
+
 
 #### prediction 
-#### swapping in sys predictions for "true"
-lin_frame_clean_sys <- lin_frame_clean
-lin_frame_clean_sys$sys_mean <- sys_predictions
-
-#### prediction 
-dia_predictions = predict(bpdia_linear1, newdata = lin_frame_clean_sys)
+dia_predictions = predict(bpdia_linear2, newdata = lin_frame_clean)
 summary(dia_predictions)
 summary(lin_frame_clean$dia_mean)
-mse_dia <- (lin_frame_clean$dia_mean - dia_predictions)^2
+
+#### MSE Frame update
+mse$predict_dia_mse <- (lin_frame_clean$dia_mean - dia_predictions)^2
+mse$predicted_dia  <- dia_predictions
+mse$true_dia <- lin_frame_bp$dia_mean
+mse$first_dia <- lin_frame_bp$bpxdi1
+mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
 
 ```
+
+
 
 ```{r}
-
-mses <- data.frame(mse_d = mse_dia,mse_s = mse_sys)
-plot(mses)
+### Density frame and plot for dia 
+  ### Frame Creation 
+  density_dia <- mse %>% select(predicted_dia,true_dia,first_dia)
+  density_dia <- melt(density_dia)
+  
+  ### Plot 
+  ggplot(density_dia, aes(x=value, fill=variable)) +
+    geom_density(alpha=0.4)
+  
+  
+### MSE frame and plot for dia
+  bar_dia <- mse %>% select(first_dia_mse, predict_dia_mse) %>% summarise(first_dia_mse = sum(first_dia_mse), predict_dia_mse = sum(predict_dia_mse))
+  bar_dia <- melt(bar_dia)
+  
+  ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+  geom_bar(stat="identity") + theme_minimal()
+  
+  ###Scatter plot 
 ```
+```{r}
+### Density frame and plot for sys
+  ### Frame Creation 
+  density_sys <- mse %>% select(predicted_sys,true_sys,first_sys)
+  density_sys <- melt(density_sys)
+  
+  ### Plot 
+  ggplot(density_sys, aes(x=value, fill=variable)) +
+    geom_density(alpha=0.4)
 
+### MSE frame and plot for sys 
+  bar_sys <- mse %>% select(first_sys_mse, predict_sys_mse) %>% summarise(first_sys_mse = mean(first_sys_mse), predict_sys_mse = mean(predict_sys_mse))
+  bar_sys <- melt(bar_sys)
+  
+  ggplot(bar_sys, aes(x=variable, y=value, fill = variable)) +
+  geom_bar(stat="identity") + theme_minimal()
+
+  
+  
+### NEED TO THROW OUT DIASTOLIC OBSERVATION 
+### CHECK FOR OUTLIERS AFTER CORRECTION 
+### SCATTER PLOT FIRST vs. TRUE 
+### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
+### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
+mse$second_sys <- lin_frame_bp$bpxsy2
+  ggplot(mse, aes(first_sys,predicted_sys))+
+    geom_point()+
+    const
+
+```
 
