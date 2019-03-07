@@ -10,6 +10,7 @@ library(dplyr)
 library(readr)
 library(matrixStats)
 library(reshape2)
+library(car)
 ```
 
 
@@ -17,11 +18,16 @@ library(reshape2)
 #### extracting likely variables 
 
 #### DV: Blood Pressure 
-#### calculating mean 
-bloodpressure.XPT$dia_mean <- rowMeans(bloodpressure.XPT[,c("bpxdi1","bpxdi2","bpxdi3")])
-bloodpressure.XPT$sys_mean <- rowMeans(bloodpressure.XPT[,c("bpxsy1","bpxsy2","bpxsy3")])
-
-dv_bp <- bloodpressure.XPT %>% select(seqn,dia_mean,sys_mean,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
+  ### selecting blood relevant blood pressures 
+  dv_bp <- bloodpressure.XPT %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
+  
+  ### throwing out outliers
+  dv_bp <- dv_bp %>% filter(bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3 != 0 & bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3 < 200 & bpxdi1,bpxdi2,bpxdi3 > 25)
+  
+  #### calculating mean 
+  dv_bp$dia_mean <- rowMeans(dv_bp[,c("bpxdi1","bpxdi2","bpxdi3")])
+  dv_bp$sys_mean <- rowMeans(dv_bp[,c("bpxsy1","bpxsy2","bpxsy3")])
+  
 
 #### IV: BMI Info 
 bmi_variables <- body_measure.XPT %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
@@ -137,6 +143,7 @@ summary(bpdia_linear2)
   #### residual assumption 
   hist(bpdia_linear2$residuals)
   plot(bpdia_linear2$fitted.values,bpdia_linear2$residuals)
+  qqPlot(bpdia_linear2, main="QQ Plot")
 
   
 #### model 3 with sys: linear regression
@@ -152,9 +159,9 @@ bpdia_linear4 = lm(dia_mean~sys_mean + bmxarmc + bmxarml + bmxht + riagendr + ri
 summary(bpdia_linear4)
 
   #### residual assumption 
-  hist(bpdia_linear4$residuals)
   plot(bpdia_linear4$fitted.values,bpdia_linear1$residuals)
-
+  qqPlot(bpdia_linear4,ylab="Standardized Residuals", xlab="Normal Scores")
+  crPlots(bpdia_linear4)
 
 #### prediction 
 dia_predictions = predict(bpdia_linear2, newdata = lin_frame_clean)
@@ -216,6 +223,7 @@ mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
 ### SCATTER PLOT FIRST vs. TRUE 
 ### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
 ### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
+### Histogram of differences 
 mse$second_sys <- lin_frame_bp$bpxsy2
   ggplot(mse, aes(first_sys,predicted_sys))+
     geom_point()+
