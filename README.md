@@ -1,2 +1,2 @@
-# IHME
-Exploring local health data from IHME 
+# Senior Research
+predicting blood pressure 
