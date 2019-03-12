@@ -1,0 +1,27 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
+```
+
+
+
+```{r}
+#reading in all .XPT SAS files from NHANES_DATA folder 
+nhanes_file_names <- list.files(path = "NHANES_DATA")
+for(i in 1:length(nhanes_file_names))
+{
+  assign(paste(nhanes_file_names[i]), sasxport.get(paste0("NHANES_DATA/", nhanes_file_names[i])))
+}
+```
+
