@@ -1,6 +1,8 @@
 ---
 title: "Untitled"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +13,7 @@ library(dplyr)
 library(readr)
 library(Hmisc)
 library(ggfortify)
+#### Setting working directory 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
 
@@ -23,5 +26,93 @@ for(i in 1:length(nhanes_file_names))
 {
   assign(paste(nhanes_file_names[i]), sasxport.get(paste0("NHANES_DATA/", nhanes_file_names[i])))
 }
+```
+
+```{r}
+years <- c("_1999.XPT","_2003.XPT","_2005.XPT","_2007.XPT","_2009.XPT","_2011.XPT","_2013.XPT","_2015.XPT")
+
+####Blood Pressure 
+bloodpressure <- bloodpressure_1999.XPT
+for(i in 2:length(years))
+{
+  bloodpressure <- bind_rows(bloodpressure,get(paste0("bloodpressure",years[i])))    
+}
+
+####Bad Cholesterol
+bad_cholesterol <- bad_cholesterol_1999.XPT
+for(i in 2:length(years))
+{
+  bad_cholesterol <- bind_rows(bad_cholesterol,get(paste0("bad_cholesterol",years[i])))    
+}
+
+####body measure 
+body_measure <- body_measure_1999.XPT
+for(i in 2:length(years))
+{
+  body_measure <- bind_rows(body_measure,get(paste0("body_measure",years[i])))    
+}
+
+####demographic 
+demographic <- demographic_1999.XPT
+for(i in 2:length(years))
+{
+  demographic <- bind_rows(demographic,get(paste0("demographic",years[i])))    
+}
+
+
+####diabetes 
+diabetes <- diabetes_1999.XPT
+for(i in 2:length(years))
+{
+  diabetes <- bind_rows(diabetes,get(paste0("diabetes",years[i])))    
+}
+
+
+####glucose 
+glucose <- glucose_1999.XPT
+for(i in 2:length(years))
+{
+  glucose <- bind_rows(glucose,get(paste0("glucose",years[i])))    
+}
+
+
+####heart_health 
+heart_health <- heart_health_1999.XPT
+for(i in 2:length(years))
+{
+  heart_health <- bind_rows(heart_health,get(paste0("heart_health",years[i])))    
+}
+
+
+####kidney_health 
+kidney_health <- kidney_health_1999.XPT
+for(i in 2:length(years))
+{
+  kidney_health <- bind_rows(kidney_health,get(paste0("kidney_health",years[i])))    
+}
+
+####diabetes 
+diabetes <- diabetes_1999.XPT
+for(i in 2:length(years))
+{
+  diabetes <- bind_rows(diabetes,get(paste0("diabetes",years[i])))    
+}
+
+####total and good cholesterol 
+cholesterol <- merge(get(paste0("cholesterol",years[3])),get(paste0("good_cholesterol",years[3])))
+for(i in 4:length(years))
+{
+  
+  a <- merge(get(paste0("cholesterol",years[i])),get(paste0("good_cholesterol",years[i])))
+  cholesterol <- bind_rows(cholesterol,a)
+}
+total_good_cholesterol_1999.XPT
+cholesterol <- bind_rows(cholesterol, total_good_cholesterol_1999.XPT)
+cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2001.XPT)
+cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2003.XPT)
+```
+
+```{r}
+
 ```
 

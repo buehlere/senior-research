@@ -19,46 +19,36 @@ library(car)
 
 #### DV: Blood Pressure 
   ### selecting blood relevant blood pressures 
-  dv_bp <- bloodpressure.XPT %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
+  dv_bp <- bloodpressure %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
   
   ### throwing out outliers
-  dv_bp <- dv_bp %>% filter(bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3 != 0 & bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3 < 200 & bpxdi1,bpxdi2,bpxdi3 > 25)
+  dv_bp <- dv_bp %>% filter(bpxsy1 != 0 & bpxsy2 != 0 & bpxsy3 != 0 & bpxdi1 != 0 & bpxdi2 != 0 & bpxdi3 != 0 & bpxsy1 < 200 & bpxsy2 < 200 & bpxsy3 < 200 & bpxdi1 < 200 & bpxdi2,bpxdi3 < 200 & bpxdi1 > 25 & bpxdi2 > 25 &bpxdi3 > 25)
+  summary(dv_bp)
   
   #### calculating mean 
   dv_bp$dia_mean <- rowMeans(dv_bp[,c("bpxdi1","bpxdi2","bpxdi3")])
   dv_bp$sys_mean <- rowMeans(dv_bp[,c("bpxsy1","bpxsy2","bpxsy3")])
-  
 
 #### IV: BMI Info 
-bmi_variables <- body_measure.XPT %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
+bmi_variables <- body_measure %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
 
 #### IV: Demographic 
-demo_variables <- demographic.XPT %>% select(seqn,riagendr, ridageyr)
+demo_variables <- demographic %>% select(seqn,riagendr, ridageyr)
 
 #### IV: Diabetes 
-dia_variables <- diabetes.XPT %>% select(seqn,diq010)
+dia_variables <- diabetes %>% select(seqn,diq010)
 
 #### IV: Cholesteral 
-high_chol_variables <- high_cholesterol.XPT %>% select(seqn,lbdhdd)
-low_chol_variables <- low_cholesterol.XPT %>% select(seqn,lbdldl)
-total_chol_variables <- cholesterol.XPT %>% select(seqn,lbxtc)
-
-
-#### IV: Smoking 
-smoking_variables <- cigs.XPT %>% select(seqn,smq040)
-### recode: 
-smoking_variables$smoker <- smoking_variables$smq040
-smoking_variables$smq040 <- NULL 
-smoking_variables <- smoking_variables %>% mutate(smoker = ifelse(smoker < 3,1,0))
-
+chol_variables <- cholesterol %>% select(seqn,lbdhdd,lbxtc)
+bad_chol_variables <- bad_cholesterol %>% select(seqn,lbdldl)
 
 
 ####IV: glucose 
-glu_variables <- glucose.XPT %>% select(seqn,lbxglu)
+glu_variables <- glucose %>% select(seqn,lbxglu)
 
 ####merge 
 lin_frame <- dv_bp 
-variables <- c("bmi_variables","demo_variables","dia_variables","high_chol_variables","low_chol_variables","total_chol_variables","glu_variables")
+variables <- c("bmi_variables","demo_variables","dia_variables","bad_chol_variables","chol_variables","glu_variables")
 for(i in 1:length(variables))
 {
   lin_frame <- merge(lin_frame,eval(as.name(variables[i])),by=c("seqn"))
@@ -82,6 +72,8 @@ summary(lin_frame_bp)
 ```{r}
 ####variable inspection 
 cor(lin_frame_clean)
+summary(lin_frame_clean)
+summary(lin_frame_bp)
 ```
 
 
@@ -89,7 +81,7 @@ cor(lin_frame_clean)
 #### Systolic prediction 
 #### correlation
 sys_lin <- subset(lin_frame_clean, select=-c(dia_mean))
-cor(sys_lin)
+
 #### model 1: linear regression
 
 bpsys_linear1 = lm(sys_mean~.,sys_lin)
