@@ -14,60 +14,6 @@ library(car)
 ```
 
 
-```{r}
-#### extracting likely variables 
-
-#### DV: Blood Pressure 
-  ### selecting blood relevant blood pressures 
-  dv_bp <- bloodpressure %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
-  
-  ### throwing out outliers
-  dv_bp <- dv_bp %>% filter(bpxsy1 != 0 & bpxsy2 != 0 & bpxsy3 != 0 & bpxdi1 != 0 & bpxdi2 != 0 & bpxdi3 != 0 & bpxsy1 < 200 & bpxsy2 < 200 & bpxsy3 < 200 & bpxdi1 < 200 & bpxdi2,bpxdi3 < 200 & bpxdi1 > 25 & bpxdi2 > 25 &bpxdi3 > 25)
-  summary(dv_bp)
-  
-  #### calculating mean 
-  dv_bp$dia_mean <- rowMeans(dv_bp[,c("bpxdi1","bpxdi2","bpxdi3")])
-  dv_bp$sys_mean <- rowMeans(dv_bp[,c("bpxsy1","bpxsy2","bpxsy3")])
-
-#### IV: BMI Info 
-bmi_variables <- body_measure %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
-
-#### IV: Demographic 
-demo_variables <- demographic %>% select(seqn,riagendr, ridageyr)
-
-#### IV: Diabetes 
-dia_variables <- diabetes %>% select(seqn,diq010)
-
-#### IV: Cholesteral 
-chol_variables <- cholesterol %>% select(seqn,lbdhdd,lbxtc)
-bad_chol_variables <- bad_cholesterol %>% select(seqn,lbdldl)
-
-
-####IV: glucose 
-glu_variables <- glucose %>% select(seqn,lbxglu)
-
-####merge 
-lin_frame <- dv_bp 
-variables <- c("bmi_variables","demo_variables","dia_variables","bad_chol_variables","chol_variables","glu_variables")
-for(i in 1:length(variables))
-{
-  lin_frame <- merge(lin_frame,eval(as.name(variables[i])),by=c("seqn"))
-}
-summary(lin_frame)
-```
-
-```{r}
-####Prediction Frame 
-lin_frame$bmxrecum <- NULL 
-lin_frame_clean <- subset(lin_frame, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 
-lin_frame_clean <- na.omit(lin_frame_clean)
-summary(lin_frame_clean)
-
-#### Blood Pressure Frame 
-lin_frame_bp <- na.omit(lin_frame)
-summary(lin_frame_bp)
-```
-
 
 ```{r}
 ####variable inspection 
@@ -88,8 +34,15 @@ bpsys_linear1 = lm(sys_mean~.,sys_lin)
 summary(bpsys_linear1)
 
   #### residual assumption 
-  hist(bpsys_linear1$residuals)
+  #### overal residual values 
   plot(bpsys_linear1$fitted.values,bpsys_linear1$residuals)
+  
+  #### all residuals 
+  crPlots(bpsys_linear1)
+  
+  #### qq-plot
+  qqPlot(bpsys_linear1,ylab="Standardized Residuals", xlab="Normal Scores")
+  
 
 #### model 2: linear regression
 
@@ -132,10 +85,7 @@ summary(bpdia_linear1)
 bpdia_linear2 = lm(dia_mean~bmxarmc + bmxht + diq010 + lbdldl + lbxtc,dia_lin)
 summary(bpdia_linear2)
 
-  #### residual assumption 
-  hist(bpdia_linear2$residuals)
-  plot(bpdia_linear2$fitted.values,bpdia_linear2$residuals)
-  qqPlot(bpdia_linear2, main="QQ Plot")
+
 
   
 #### model 3 with sys: linear regression
