@@ -1,0 +1,365 @@
+---
+title: "Regression Try"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(readr)
+library(leaps)
+library(dplyr)
+library(ggplot2)
+library(car)
+```
+
+
+# Regression Homework
+
+# 41) 
+
+```{r, include=FALSE}
+cars <- read.csv("~/classes/242/C3 cars.csv")
+
+cars <- mutate(cars,Buick  = ifelse((Make == 'Buick'),1,0))
+cars <- mutate(cars, Cadillac  = ifelse((Make == 'Cadillac'),1,0))
+cars <- mutate(cars, Chevrolet = ifelse((Make == 'Pontiac'),1,0))
+cars <- mutate(cars,SAAB = ifelse((Make == 'SAAB'),1,0))
+cars <- mutate(cars,Saturn = ifelse((Make == 'Saturn'),1,0))
+cars <- mutate(cars,Chevrolet = ifelse((Make == 'Chevrolet'),1,0))
+```
+
+## Best Subsets) 
+```{r}
+cars1 <- select(cars,Mileage, Price,Cyl:Leather,Buick:Chevrolet)
+
+best.subset <- regsubsets(Price~.,cars1,nvmax = 5)
+summary(best.subset)
+```
+
+#### If we are looking to make a model with five variables for predicting price, the best variables to use together look to be Liter, Doors, Cruise, Cadillac, and Chevrolet. 
+
+## Step-Wise) 
+
+```{r}
+null <- lm(Price~1,data = cars1)
+full <- lm(Price~.,data = cars1)
+step(null, scope=list(lower=null, upper=full),direction="forward")
+```
+
+#### Based off of best subsets, Cadillac, Liter, Chevrolet, Doors, Cruise, Mileage, Cyl, Buick, Leather are good variables to add to the model before stopping. However, after doing a quick check Leather isn't too significant, and I decide to drop it from the model. 
+
+## Model)
+
+```{r}
+reg <- lm(Price ~ Cadillac + Liter + Chevrolet + Doors + Cruise + Mileage + Cyl + Buick , data=cars1)
+summary(reg) 
+```
+
+#### This is the model I decided on for predicting price. All variables are very significant with small p-values, indicating that their coefficient isn't zero. The R-squared for the model is 68%, which means we are explaining 68% of variance, which is pretty good. The overall p-value for the model is also very small indicating that our model isn't a result of random chance. However, we still have to check the models assumptions: 
+
+
+## Diagnostics) 
+
+```{r}
+ncvTest(reg)
+shapiro.test(reg$residuals)
+hist(reg$residuals)
+plot(reg$fitted.values,reg$residuals)
+plot(cars1$Cadillac ,reg$residuals)
+plot(cars1$Liter ,reg$residuals)
+plot(cars1$Chevrolet ,reg$residuals)
+plot(cars1$Doors ,reg$residuals)
+plot(cars1$Cruise ,reg$residuals)
+plot(cars1$Mileage ,reg$residuals)
+plot(cars1$Cyl ,reg$residuals)
+plot(cars1$Buick ,reg$residuals)
+
+newdata = data.frame(Cadillac=0, Liter=3.1,Chevrolet=0,Doors=4,Cruise=1,Mileage=8221,Cyl=6,Buick=1)
+predict(reg,newdata,interval = "predict")
+```
+
+#### In the diagnostics above, we run both a ncv-test, and a shapiro test. However, these tests are not appropriate, because they are too powerful to trust on a sample size of 804. In checking for normality, the histogram of the residuals seems pretty normally distributed, however it does show some right skewness, but I'm not too worried due to the large sample size. The plot of the residuals against the model's fitted values looks heteroskedastic with the values not varying equally across the range of values. I would say that this plot fails the assumption of homoskedasticity. The residual plots for the categorical variables also show signs of heteroskadastic with the different cartegories varying differently. However, the residuals for Mileage looks like a random cloud, demonstrating good evidence of homoskedasticity. Overall, It seems that the model passes the assumption of normality, but is indecisive on the assumption of heteroskedasticity.
+
+
+# E10) 
+
+## Best Subsets)
+
+```{r}
+ars <- read.csv("~/classes/242/C3 Arsenic.csv")
+
+best.subset <- regsubsets(Water~.,ars,nvmax = 3)
+summary(best.subset)
+```
+
+### Based off of the best subsets method, three good variables to use together to predict arsenic levels in water are Age, Sex, and Toenails. However, Age and sex don't make much sense considering what we are trying to predict. 
+
+## Step Wise) 
+
+```{r}
+
+
+null <- lm(Water~1,data = ars)
+full <- lm(Water~.,data = ars)
+step(null, scope=list(lower=null, upper=full),direction="forward")
+```
+
+#### Based off of the results, Toenails, and Sex are good variables to add to the model before stopping, and do a good job of minimizing the residuals. However, doing a quick check Toenails appears to be the only significant variable. 
+
+# Model) 
+```{r}
+reg <- lm(Water ~ Toenails   , data=ars)
+summary(reg) 
+```
+
+#### This is the model I decided on to predict arsenic levels in water. The variable toenails has a very low p-value, demonstrating that it is significant (its coefficient isn't zero). The R-squared for the model is 79%, meaning we are explaining 78% of the variance in arsenic, which is pretty good for a single variable. The p-value for the model is also significant, meaning our model isn't a result of random chance. Below I check the assumptions for this model. 
+
+## Diagnostics) 
+
+```{r}
+ncvTest(reg)
+shapiro.test(reg$residuals)
+hist(reg$residuals)
+plot(reg$fitted.values,reg$residuals)
+plot(ars$Toenails ,reg$residuals)
+```
+
+#### Based off the results above, the histogram of the residuals is heavly left skewed, and we also only have a few observations. The shapiro test corroborates the histogram of residuals by rejecting the null hypothesis that our data isn't skewed (It is skewed). Overall, It looks to be that we fail the assumption of normality. In the NCV test we fail to reject null hypothesis, so we have evidence our data is homoskedastic. The plots of the residuals generally agree with the NCV tests finding that the variances are pretty equal, but it is hard to tell. Overall, we pass the assumption of homoskedacity. To help correct for the skewness of the residuals I take the log of both the dependent, and independent variable below: 
+
+
+```{r}
+
+ars <- ars %>% mutate( lnToe = log(ars$Toenails))
+ars <- ars %>% mutate( lnWater = log(ars$Water + 1))
+
+reg <- lm(lnWater ~ lnToe , data=ars)
+summary(reg) 
+
+ncvTest(reg)
+shapiro.test(reg$residuals)
+hist(reg$residuals)
+plot(reg$fitted.values,reg$residuals)
+plot(ars$lnWater ,reg$residuals)
+plot(ars$lnToe ,reg$residuals)
+
+
+
+```
+
+#### After loging our variables, the residuals of our model are much more normally distributed, demonstrated by the histogram of the residuals, and the failure to reject the null hypothesis of the Shapiro test that our data isn't skewed. However, the model is now showing more signs of heteroskedacity with the NCV test rejecting the null hypothesis showing that our data is heteroskedastic. This is supported by the residuals plots which now show unequal variances, and signs of auto-correlation. In this case we fail the assumption of homoskedacity. The model's R squared of the model also lowered from 78% to 59% after the transformation, but toenails still remains significant. 
+
+# E12)
+
+
+
+```{r, include=FALSE}
+pol <- read.csv("~/classes/242/C3 Politics.csv")
+pol$X2001.Lower.Democrat <- as.character(pol$X2001.Lower.Democrat)
+pol$X2001.Lower.Democrat <- as.numeric(pol$X2001.Lower.Democrat)
+
+pol$X2001.Lower.Republican <- as.character(pol$X2001.Lower.Republican)
+pol$X2001.Lower.Republican <- as.numeric(pol$X2001.Lower.Republican)
+
+pol$X2001.Lower.Other <- as.character(pol$X2001.Lower.Other)
+pol$X2001.Lower.Other <- as.numeric(pol$X2001.Lower.Other)
+
+pol$X2001.Upper.Democrat <- as.character(pol$X2001.Upper.Democrat)
+pol$X2001.Upper.Democrat <- as.numeric(pol$X2001.Upper.Democrat)
+
+pol$X2001.Upper.Republican <- as.character(pol$X2001.Upper.Republican)
+pol$X2001.Upper.Republican <- as.numeric(pol$X2001.Upper.Republican)
+
+pol$X2001.Upper.Other <- as.character(pol$X2001.Upper.Other)
+pol$X2001.Upper.Other <- as.numeric(pol$X2001.Upper.Other)
+
+pol <- rename(pol, voting = Percentage.of.people.18..having.voted.in.2000)
+```
+
+```{r, include=FALSE}
+pol <- pol %>% filter( States != 'Nebraska') %>% mutate(PerLower = X2001.Lower.Democrat / (X2001.Lower.Democrat + X2001.Lower.Republican + X2001.Lower.Other), PerUpper = X2001.Upper.Democrat / (X2001.Upper.Democrat + X2001.Upper.Republican + X2001.Upper.Other))
+
+pol <- pol %>% mutate(PerDem = (PerUpper + PerLower) / 2)
+
+```
+
+
+## Best Subsets) 
+
+```{r}
+
+pol <- select(pol,Percent.Unemployed.of.the.Civilian.Labor.Force..age.16..:voting,PerDem)
+pol <- na.omit(pol)
+best.subset <- regsubsets(voting~.,pol,nvmax = 5)
+summary(best.subset)
+```
+
+#### Based off of the best subsets method, It looks like age, Church Adherence, average family size, government health insurance, and percent dem are five good variables to use together in predicting voting.
+
+
+## Step Wise) 
+
+```{r}
+
+null <- lm(voting~1,data = pol)
+full <- lm(voting~.,data = pol)
+step(null, scope=list(lower=null, upper=full),direction="forward")
+
+```
+
+#### Based off of the Step Wise method age, Church Adherence, average family size, government health insurance, and percent dem plus unemployement, and education are all good predictors for voting, and serve to minimize the residuals. 
+
+## Model) 
+
+```{r}
+
+reg <- lm(voting ~ Average.Number.of.people.per.family.2000 + Percent.Christian.Chruch.Adherents.2000 + 
+    Percent.of.Population.65. + Percentage.of.people.with.health.insurance..private...govt. + 
+    PerDem + Percent.Unemployed.of.the.Civilian.Labor.Force..age.16.. + 
+    Percent.of.the.Population.with.Bachelor.s.Degree.or.more..age.25.., data=pol)
+summary(reg) 
+```
+
+#### Running the model, all variables are significant. Average number of people per family, and Church Adherence prove the most significant with the lowest p-values, while percent of population with bachelor degree prove the least significant with the highest p-value. However, percent of population with bachelor degree still serves to prove the R-Squared by several percentage points so it is left in the model. The adjusted R-squared for the model is 56%, meaning we explain 56% of variance in voting. The p-value for the model is also very low, indicating that it is un-likely this model is a result of random chance. The diagnostics for the model are checked below: 
+
+## Diagnostics) 
+
+
+```{r}
+ncvTest(reg)
+shapiro.test(reg$residuals)
+hist(reg$residuals)
+plot(reg$fitted.values,reg$residuals)
+plot(pol$voting,reg$residuals)
+plot(pol$Average.Number.of.people.per.family.2000,reg$residuals)
+plot(pol$Percent.Christian.Chruch.Adherents.2000,reg$residuals)
+plot(pol$Percent.of.Population.65.,reg$residuals)
+plot(pol$Percentage.of.people.with.health.insurance..private...govt.,reg$residuals)
+plot(pol$PerDem,reg$residuals)
+plot(pol$Percent.Unemployed.of.the.Civilian.Labor.Force..age.16..,reg$residuals)
+plot(pol$Percent.of.the.Population.with.Bachelor.s.Degree.or.more..age.25..,reg$residuals)
+
+
+
+```
+
+
+#### For the assumption of normality, the model fails. The histogram of the residuals is left skewed, and we reject the null hypothesis that our data isn't skewed. For the assumptions of homoskedacity, and auto-correlation, the model passes. The NCV test fails to reject null hypothesis, showing evidence of homoskedacity. Additionally the residuals plots show no major signs of auto-correlation, and seem to be homoskedastic (equal variance). Health insurance, and age don't look perfect, but considering the rest of the evidence I would say they are passable. 
+
+
+# E14)
+
+```{r, include=FALSE}
+movies <- read.csv("~/classes/242/C3 2008Movies.csv")
+
+movies$Total.Gross <- as.character(movies$Total.Gross)
+movies$Total.Gross<- gsub("$", "", movies$Total.Gross, fixed=TRUE)
+movies$Total.Gross<- gsub(",", "", movies$Total.Gross, fixed=TRUE)
+movies$Total.Gross <- as.numeric(movies$Total.Gross)
+
+movies <- filter(movies, is.na(Total.Gross) == FALSE)
+movies$Run.Time..min.<- as.character(movies$Run.Time..min.)
+movies$Run.Time..min.<- as.numeric(movies$Run.Time..min.)
+reg <- lm(Total.Gross~Run.Time..min.,data = movies)
+summary(reg)
+movies <- mutate(movies,ActionAdventure = ifelse((Genre == "Western"|Genre == "Action"|Genre == "Adventure"),1,0))
+movies <- mutate(movies, Comedy = ifelse((Genre == "Black Comedy"|Genre == "Comedy"|Genre == "Romantic Comedy"),1,0))
+movies <- mutate(movies,Pe = ifelse((Genre == "Concert/Performance"|Genre == "Drama"|Genre == "Musical"|Genre == "Documentary"),1,0))
+movies <- mutate(movies,Horror = ifelse((Genre == "Horror"|Genre == "Thriller/Suspense"),1,0))
+
+
+
+
+movies$MPAA <- as.character(movies$MPAA)
+movies <- mutate(movies,G = ifelse(MPAA ==  ' G',1,0))
+movies <- mutate(movies,PG = ifelse(MPAA == ' PG',1,0))
+movies <- mutate(movies,PG_13 = ifelse(MPAA == ' PG-13',1,0))
+movies <- mutate(movies,R = ifelse(MPAA == ' R',1,0))
+
+movies1 <- select(movies,Total.Gross,Run.Time..min.,ActionAdventure:R)
+```
+
+## Best Subsets) 
+```{r}
+best.subset <- regsubsets(Total.Gross~.,movies1,nvmax = 4)
+summary(best.subset)
+
+```
+
+#### In looking for four variables to use together Run Time, Action Adventure, Performance, G, and R all look like potential choices. 
+
+## Step Wise)
+```{r}
+null <- lm(Total.Gross~1,data = movies1)
+full <- lm(Total.Gross~.,data = movies1)
+step(null, scope=list(lower=null, upper=full),direction="forward")
+```
+
+#### From the step wise method, Run time, action adventure, performance, G, and R all look like significant variables that minimize the sum of the residuals. However, after a quick check performance doesn't look very significant and only slightly lowers the sum of the residuals so I throw it out of the model. It alos hurts the R-squared value. 
+
+## Model) 
+```{r}
+reg <- lm(Total.Gross ~ ActionAdventure + R + Run.Time..min. + 
+    Pe,data = movies1)
+summary(reg)
+```
+
+#### In looking at the model, all varibles are significant with Action Adventure being the most signficant. While the variables are significant, they p-values could be lower, and are even less impressive when considering the R squared of 15% (the model is only explaining 15% of the variance in total gross). Lastly, the model has a low p-value, indicating that this model likely isn't the result of random chance. 
+
+## Diagnostics) 
+
+```{r}
+ncvTest(reg)
+shapiro.test(reg$residuals)
+hist(reg$residuals)
+plot(reg$fitted.values,reg$residuals)
+plot(movies1$Total.Gross,reg$residuals)
+plot(movies1$ActionAdventure,reg$residuals)
+plot(movies1$Run.Time..min. ,reg$residuals)
+plot(movies1$G ,reg$residuals)
+plot(movies1$R ,reg$residuals)
+```
+
+#### A shapiro, and NCV test are run above, but they are too powerful for a data set with 206 observations. For the assumption of normality, the model fails being pretty heavily right skewed, and with a large number of observations piled into one bar. The assumptions of homoskedasticity, and auto-correlation, the model als fail. The Residuals for total Gross has auto-correlation. Additionally, the residuals for Run Time, R, and G seem to have unequal variance, and thus look heteroskedastic. Below I try to correct these assumptions by logging Total Gross: 
+
+```{r}
+movies1 <- movies %>% mutate( ln = log(Total.Gross))
+
+reg <- lm(ln~Run.Time..min.+ ActionAdventure+G+R,data = movies1)
+summary(reg)
+
+ncvTest(reg)
+shapiro.test(reg$residuals)
+hist(reg$residuals)
+plot(reg$fitted.values,reg$residuals)
+plot(movies1$ln,reg$residuals)
+plot(movies1$ActionAdventure ,reg$residuals)
+plot(movies1$Run.Time..min. ,reg$residuals)
+plot(movies1$G ,reg$residuals)
+plot(movies1$R ,reg$residuals)
+
+
+
+```
+
+#### After logging Total Gross, the residuals are now looking normally distributed. The plots of the variables' residuals also look better looking much more homoskedastic, but auto-correlation still persists in gross profit's residual plot. The model's significance also suffered from the transformation, and now only explains 10% of variance. The p-value for the overall model also increased. And lastly, Run time and G lost their significance. 
+
+
+## Partial F-stat) 
+
+```{r}
+reg <- lm(ln~Run.Time..min.+ ActionAdventure+G+R,data = movies1)
+summary(reg)
+reg <- lm(ln~Run.Time..min.+ ActionAdventure+G,data = movies1)
+summary(reg)
+```
+
+#### I want to check to see if its worth adding R to the model. 
+
+
+```{r}
+
+Fstat = ((1.118)^2 * 51)/(1.099)^2
+1 - pf(Fstat,df1=1,df2 = 50)
+```
+
+#### Running the partial F-test we get a low p-value indicating the variable is worth keeping in the model. 

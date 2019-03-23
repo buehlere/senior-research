@@ -129,7 +129,7 @@ cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2003.XPT)
   dv_bp <- bloodpressure %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
   
   ### throwing out outliers
-  dv_bp <- dv_bp %>% filter(bpxsy1 != 0 & bpxsy2 != 0 & bpxsy3 != 0 & bpxdi1 != 0 & bpxdi2 != 0 & bpxdi3 != 0 & bpxsy1 < 200 & bpxsy2 < 200 & bpxsy3 < 200 & bpxdi1 < 200 & bpxdi2,bpxdi3 < 200 & bpxdi1 > 25 & bpxdi2 > 25 & bpxdi3 > 25)
+  dv_bp <- dv_bp %>% filter(bpxsy1 != 0 & bpxsy2 != 0 & bpxsy3 != 0 & bpxdi1 != 0 & bpxdi2 != 0 & bpxdi3 != 0 & bpxsy1 < 200 & bpxsy2 < 200 & bpxsy3 < 200 & bpxdi1 < 200 & bpxdi2,bpxdi3 < 200 & bpxdi1 > 27 & bpxdi2 > 27 & bpxdi3 > 27)
   summary(dv_bp)
   
   #### calculating mean 
