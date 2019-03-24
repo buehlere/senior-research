@@ -1,0 +1,512 @@
+}
+View(performance)
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.4, dummyTest$Longevity)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.8,0.9,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], dummyTrain$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(class_final,dummyTrain, type="prob")[,2])
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.3,0.4,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], dummyTrain$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.321, dummyTest$Longevity)
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.322, dummyTest$Longevity)
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.4, dummyTest$Longevity)
+View(performance)
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.328, dummyTest$Longevity)
+dtree_class_information4$results
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(788:1576),], type="prob")[,2])
+table(dfclass_Prob > 0.9, dummyTest$Longevity)
+table(dfclass_Prob, dummyTest$Longevity)
+table(dfclass_Prob > .3, roseTrain[c(788:1576),]$Longevity)
+table(dfclass_Prob > .8, roseTrain[c(788:1576),]$Longevity)
+table(dfclass_Prob > .9, roseTrain[c(788:1576),]$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTest, type="prob")[,2])
+table(dfclass_Prob > 0.9, dummyTest$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,classTest, type="prob")[,2])
+table(dfclass_Prob > 0.9, dummyTest$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.9, dummyTest$Longevity)
+View(roseTrain)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = roseTrain[c(1:300,770:1567),], method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_information4$results
+dfclass_Prob = data.frame(predict(dtree_class_information4,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.9, dummyTest$Longevity)
+table(dfclass_Prob > 0.8, dummyTest$Longevity)
+table(dfclass_Prob > 0.2, dummyTest$Longevity)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = roseTrain[c(1:300,770:1070),], method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_information4$results
+dfclass_Prob = data.frame(predict(dtree_class_information4,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.2, dummyTest$Longevity)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = roseTrain, method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_information4$results
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = roseTrain[c(1:300,770:1070)], method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_information4$results
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = roseTrain[c(1:300,770:1070),], method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_information4$results
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(1))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = roseTrain[c(1:300,770:1070),], method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_information4$results
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),], type="prob")[,2])
+table(dfclass_Prob > 0.2, dummyTest$Longevity)
+table(dfclass_Prob > 0.3, roseTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.9, roseTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.5, roseTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.4, roseTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.3, roseTrain[c(301:769,1071:1576),]$Longevity)
+summary(dfclass_Prob)
+dfclass_Prob = data.frame(predict(roserose,roseTrain[c(1:787),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.3,0.4,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(1:787),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(roserose,roseTrain[c(1:300,770:1070),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.3,0.4,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(1:300,770:1070),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(roserose,roseTrain[c(1:300,770:1070),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.5,0.6,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(1:300,770:1070),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(1:300,770:1070),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.3,0.4,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(1:300,770:1070),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+summary(dfclass_Prob)
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(1:300,770:1070),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.4,0.5,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(1:300,770:1070),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+table(dfclass_Prob > 0.3, roseTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),], type="prob")[,2])
+table(dfclass_Prob > 0.3, roseTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.5, roseTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Predict = predict(dtree_class_information4,dummyTest)
+LogLoss(as.numeric(as.character(dfclass_Predict)),as.numeric(as.character(dummyTest$Longevity)))
+dtree_class_information4$results
+LogLoss(as.numeric(as.character(dfclass_Predict)),as.numeric(as.character(dummyTest$Longevity)))
+table(dfclass_Prob > 0.5, roseTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Prob = data.frame(predict(class_final,roseTrain[c(301:769,1071:1576),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.5,0.6,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(301:769,1071:1576),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+LogLoss(as.numeric(as.character(dfclass_Predict)),
+as.numeric(as.character(roseTrain[c(301:769,1071:1576),]$Longevity)))
+LogLoss(as.numeric(as.character(dfclass_Predict)),
+as.numeric(as.character(roseTrain[c(301:769,1071:1576),]$Longevity)))
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),], type="prob")[,2])
+table(dfclass_Prob > 0.5, roseTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Predict = predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),])
+LogLoss(as.numeric(as.character(dfclass_Predict)),
+as.numeric(as.character(roseTrain[c(301:769,1071:1576),]$Longevity)))
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.5,0.6,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(301:769,1071:1576),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(1))
+dtree_rose = train(as.factor(Longevity)~.,
+data = roseTrain, method = "rf",
+parms = list(split = "information"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 10000)
+dtree_class_rose$results
+dtree_rose$results
+View(performance)
+dfclass_Predict = predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),])
+LogLoss(as.numeric(as.character(dfclass_Predict)),
+as.numeric(as.character(roseTrain[c(301:769,1071:1576),]$Longevity)))
+dfclass_Prob = data.frame(predict(dtree_class_information4,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.5, dummyTest$Longevity)
+table(dfclass_Prob > 0.5, dummyTest[c(301:769,1071:1576),]$Longevity)
+dfclass_Predict = predict(dtree_class_information4,dummyTest[c(301:769,1071:1576),])
+LogLoss(as.numeric(as.character(dfclass_Predict)),
+as.numeric(as.character(dummyTest[c(301:769,1071:1576),]$Longevity)))
+dfclass_Prob = data.frame(predict(dtree_class_information4,dummyTest[c(301:769,1071:1576),], type="prob")[,2])
+table(dfclass_Prob > 0.5, dummyTest[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.6, dummyTest[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.7, dummyTest[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.2, dummyTest[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.3, dummyTest[c(301:769,1071:1576),]$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,classTrain[c(301:769,1071:1576),],
+type="prob")[,2])
+table(dfclass_Prob > 0.5, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.6, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.3, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.4, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.32, classTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,roseTrain[c(301:769,1071:1576),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.5,0.6,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], roseTrain[c(301:769,1071:1576),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+table(dfclass_Prob > 0.508, classTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Prob = data.frame(predict(dtree_class_information4,classTrain[c(301:769,1071:1576),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.5,0.6,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], classTrain[c(301:769,1071:1576),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(dtree_class_information4,classTrain[c(301:769,1071:1576),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.3,0.4,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], classTrain[c(301:769,1071:1576),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+dfclass_Prob = data.frame(predict(dtree_class_information4,classTrain[c(301:769,1071:1576),], type="prob")[,2])
+summary(dfclass_Prob)
+performance = setNames(data.frame(matrix(ncol = 8, nrow = 101)),
+c("Cutoff","TN", "FN", "TP", "FP", "Sensitivity", "Specificity","Accuracy"))
+performance$Cutoff = seq(0.5,0.6,.001)
+summary(dfclass_Prob)
+for (i in 1:101){
+temp = table( dfclass_Prob > performance$Cutoff[i], classTrain[c(301:769,1071:1576),]$Longevity)
+TN = temp[1,1]
+FN = temp[1,2]
+FP = temp[2,1]
+TP = temp[2,2]
+performance$TN[i] = TN
+performance$TP[i] = TP
+performance$FN[i] = FN
+performance$FP[i] = FP
+performance$Sensitivity[i] = TP/(FN+TP)
+performance$Specificity[i] = TN/(TN+FP)
+performance$Accuracy[i] = (TP+TN)/(FP+FN+TP+TN)
+}
+View(performance)
+table(dfclass_Prob > 0.6, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.5, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.6, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+kable(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+a <- table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+kable(a)
+install.packages("knitr")
+library("knitr", lib.loc="/Library/Frameworks/R.framework/Versions/3.4/Resources/library")
+kable(a)
+kable(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+class_final$results
+trctrl = trainControl(method="cv",number = 10)
+log_model4 = train(as.factor(Longevity)~., data = classTrain,method = "glm",
+family = binomial ,trControl = trctrl)
+log_model4$results
+trctrl = trainControl(method="cv",number = 10)
+log_model4 = train(as.factor(Longevity)~., data = roseTrain,method = "glm",
+family = binomial ,trControl = trctrl)
+log_model4$results
+control = trainControl(method="repeatedcv",number = 10, repeats = 3)
+nonlda_model = train(as.factor(Longevity)~.,
+data=roseTrain,
+method="lda",
+trControl = control)
+nonlda_model$results
+class_final$results
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.328, dummyTest$Longevity)
+dfclass_Predict = predict(class_final,dummyTest)
+LogLoss(as.numeric(as.character(dfclass_Predict)),as.numeric(as.character(dummyTest$Longevity)))
+dfclass_Prob = data.frame(predict(dtree_class_information4,classTrain[c(301:769,1071:1576),],
+type="prob")[,2])
+table(dfclass_Prob > 0.579, classTest[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity)
+dfclass_Predict = predict(dtree_class_information4,classTrain[c(301:769,1071:1576),])
+LogLoss(as.numeric(as.character(dfclass_Predict)),
+as.numeric(as.character(classTrain[c(301:769,1071:1576),]$Longevity)))
+kable(table(dfclass_Prob > 0.579, classTrain[c(301:769,1071:1576),]$Longevity))
+kable(dfclass_Prob > 0.328, dummyTest$Longevity)
+dfclass_Prob = data.frame(predict(class_final,dummyTest, type="prob")[,2])
+table(dfclass_Prob > 0.328, dummyTest$Longevity)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_information4 = train(as.factor(Longevity)~.,
+data = classTrain, method = "rf",
+parms = list(split = "inforamtinos"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 20000)
+plot(dtree_class_information4)
+dtree_class_information4$results
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_information4 = train(as.factor(Longevity)~.,
+data = classTrain, method = "rf",
+parms = list(split = "inforamtion"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 20000)
+plot(dtree_class_information4)
+dtree_class_information4$results
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_information4 = train(as.factor(Longevity)~.,
+data = classTrain, method = "rf",
+parms = list(split = "information"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 20000)
+plot(dtree_class_information4)
+dtree_class_information4$results
+dtree_class_information3$results
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(12))
+dtree_class_information4 = train(as.factor(Longevity)~.,
+data = classTrain, method = "rf",
+parms = list(split = "gini"),
+trControl=trctrl, tuneGrid = tunegrid,ntrees = 20000)
+dtree_class_information4$results
+dtree_class_information4$results
+dfclass_Prob = data.frame(predict(dtree_class_information4,productTest, type="prob")[,2])
+dfclass_Predict = predict(dtree_class_information4,productTest)
+Classificationpredictions = setNames(cbind(dfclass_Prob,dfclass_Predict),
+c("Class Predictions","Probability Predictions"))
+View(Classificationpredictions)
+write.csv(Classificationpredictions,"Classification predictions")
+knn_try5$results$RMSE
+dummyregTest <- regressTrain[c(1:788),]
+dummyregTrain <- regressTrain[c(789:1576),]
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3,preProcOptions = list(pcaComp = 8))
+knn_final = train(Sales~., data = dummyregTrain, method = "knn",
+trControl=trctrl,
+preProcess = c("center", "scale"),
+tuneLength = 13)
+knn_final$results$RMSE
+kn_predict <- predict(knn_try5,dummyregTest)
+sqrt(mean((kn_final - dummyregTest$Sales)^2) / 788)
+sqrt(mean((kn_predict - dummyregTest$Sales)^2) / 788)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3,preProcOptions = list(pcaComp = 8))
+knn_try5 = train(Sales~., data = regressTrain, method = "knn",
+trControl=trctrl,
+preProcess = c("center", "scale"),
+tuneLength = 13)
+plot(knn_try5)
+knn_try5$results$RMSE
+kn_final <- predict(knn_try5,productTest)
+write.csv(kn_final,"Regression Predictions.csv")
+Regpredictions <- predict(knn_try5,productTest)
+write.csv(Regpredictions,"Regression Predictions.csv")
+write.csv(Classificationpredictions,"Classification predictions.csv")

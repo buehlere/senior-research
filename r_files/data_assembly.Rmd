@@ -13,6 +13,7 @@ library(dplyr)
 library(readr)
 library(Hmisc)
 library(ggfortify)
+library(fastDummies)
 #### Setting working directory 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
@@ -140,7 +141,9 @@ cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2003.XPT)
 bmi_variables <- body_measure %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
 
 #### IV: Demographic 
-demo_variables <- demographic %>% select(seqn,riagendr, ridageyr)
+demo_variables <- demographic %>% select(seqn,riagendr, ridageyr,ridreth3)
+
+demo_variables$ridreth3 <- ifelse(demo_variables$ridreth3 <= 2, 1,ifelse(demo_variables$ridreth3 == 3,2,ifelse(demo_variables$ridreth3 == 4,3, ifelse(demo_variables$ridreth3 == 6, 4, ifelse(demo_variables$ridreth3 == 7,5,NA)))))
 
 #### IV: Diabetes 
 dia_variables <- diabetes %>% select(seqn,diq010) %>% filter(diq010 <= 3)
@@ -176,9 +179,15 @@ summary(lin_frame)
 lin_frame$bmxrecum <- NULL 
 lin_frame_clean <- subset(lin_frame, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 
 lin_frame_clean <- na.omit(lin_frame_clean)
+
+
+#### dumming out 
+lin_frame_clean <- lin_frame_clean %>% mutate(hispanic = ifelse(ridreth3 == 1,1,0),white = ifelse(ridreth3 == 2,1,0),black = ifelse(ridreth3 == 3,1,0),asian = ifelse(ridreth3 == 4,1,0),mult = ifelse(ridreth3 == 5,1,0))
 summary(lin_frame_clean)
 
 #### Blood Pressure Frame 
 lin_frame_bp <- na.omit(lin_frame)
 summary(lin_frame_bp)
+
+
 ```

@@ -33,7 +33,7 @@ lin_frame_clean %>% ggplot(aes(dia_mean,sys_mean)) + geom_point()
 ```{r}
 #### Systolic prediction 
 #### correlation
-sys_lin <- subset(lin_frame_clean, select=-c(dia_mean))
+sys_lin <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
 
 #### model 1: linear regression
 bpsys_linear1 = lm(sys_mean~.,sys_lin)
@@ -97,20 +97,19 @@ summary(bpsys_linear1)
   crPlots(res_correct)
 
 #### model 2: linear regression
-
-bpsys_linear2 = lm(sys_mean~I(ridageyr^2)+I(lbxglu^(1/3))+log(lbxtc)+log(bmxsad1)+log(bmxwaist)+bmxbmi+riagendr+diq010+lbdldl+ridageyr:lbdldl+bmxwt:ridageyr+bmxarml:ridageyr,sys_lin)
+bpsys_linear2 = lm(sys_mean~bmxarmc + log(bmxsad1) + log(bmxwaist) + riagendr + I(ridageyr^2) + log(lbdldl) + log(lbxtc) + I(lbxglu^(1/3)) + hispanic + black + ridageyr:white + ridageyr:lbdldl + bmxarmc:ridageyr, sys_lin)
 summary(bpsys_linear2)
 
   #### residual assumption 
   #### overal residual values 
-  plot(bpsys_linear1$fitted.values,bpsys_linear1$residuals)
+  plot(bpsys_linear2$fitted.values,bpsys_linear2$residuals)
   
   #### all residuals 
-  crPlots(bpsys_linear1)
+  crPlots(bpsys_linear2)
 
   
   #### qq-plot
-  qqPlot(bpsys_linear1,ylab="Standardized Residuals", xlab="Normal Scores")
+  qqPlot(bpsys_linear2,ylab="Standardized Residuals", xlab="Normal Scores")
 
 
 
@@ -127,7 +126,7 @@ mse <- data.frame(predict_sys_mse = (lin_frame_clean$sys_mean - sys_predictions)
 ```{r}
 #### Diastolic prediction 
 #### correlation
-dia_lin <- subset(lin_frame_clean, select=-c(sys_mean))
+dia_lin <- subset(lin_frame_clean, select=-c(sys_mean,ridreth3,mult))
 cor(dia_lin)
 
 
@@ -150,13 +149,38 @@ summary(bpdia_linear1)
   #### qq-plot
   qqPlot(bpdia_linear1,ylab="Standardized Residuals", xlab="Normal Scores")
   
-  #### correcting year 
-  res_correct = lm(sys_mean~I(ridageyr^2),sys_lin)
-  res_not = lm(sys_mean~(ridageyr),sys_lin)
+  #### correcting lbdldl
+  res_correct = lm(sys_mean~log(lbdldl),sys_lin)
+  res_not = lm(sys_mean~(lbdldl),sys_lin)
+  crPlots(res_not)
+  crPlots(res_correct)
+  
+  #### correcting lbxglu
+  res_correct = lm(sys_mean~log(lbxglu),sys_lin)
+  res_not = lm(sys_mean~(lbxglu),sys_lin)
+  crPlots(res_not)
+  crPlots(res_correct)
+  
+  #### correcting lbxtc
+  res_correct = lm(sys_mean~log(lbxtc),sys_lin)
+  res_not = lm(sys_mean~(lbxtc),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
 
 #### model 2: linear regression
+bpdia_linear2 = lm(dia_mean~I(ridageyr^2)+log(lbxtc)+log(lbdldl)+bmxleg+bmxsad1+riagendr+diq010+lbdhdd+hispanic+asian+bmxleg:ridageyr+bmxwaist:ridageyr+ridageyr:diq010+ridageyr:lbdhdd,dia_lin)
+summary(bpdia_linear2)
+
+  #### residual assumption 
+  #### overal residual values 
+  plot(bpdia_linear2$fitted.values,bpdia_linear2$residuals)
+  
+  #### all residuals 
+  crPlots(bpdia_linear2)
+
+  
+  #### qq-plot
+  qqPlot(bpdia_linear2,ylab="Standardized Residuals", xlab="Normal Scores")
 
 #### prediction 
 dia_predictions = predict(bpdia_linear2, newdata = lin_frame_clean)
@@ -194,6 +218,7 @@ mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
   
   ###Scatter plot 
 ```
+
 ```{r}
 ### Density frame and plot for sys
   ### Frame Creation 
@@ -219,10 +244,7 @@ mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
 ### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
 ### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
 ### Histogram of differences 
-mse$second_sys <- lin_frame_bp$bpxsy2
-  ggplot(mse, aes(first_sys,predicted_sys))+
-    geom_point()+
-    const
-
+ggplot(mse, aes(predicted_dia,predicted_sys))+
+    geom_point()
 ```
 

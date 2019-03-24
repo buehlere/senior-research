@@ -1,0 +1,79 @@
+---
+title: "clustering"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
+```
+
+```{r}
+cluster_frame <- lin_frame_clean[,-c(13,19:23)]
+#### Looking at best number of Clusters:
+#### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
+wss = list(15)
+for (k in 2:15){ 
+  wss[k] = sum(kmeans(cluster_frame[,-1], k, nstart=10)$tot.withinss)
+}
+
+### plot results 
+plot(2:15, wss[2:15], type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+```
+
+
+```{r}
+#### creating clusters and labeling 
+kmeans_fit = kmeans(cluster_frame, 4)
+#kmeans_fit$centers
+#kmeans_fit$size
+cluster_frame$cluster <- as.factor(kmeans_fit$cluster)
+```
+
+
+
+```{r}
+#### principal componant for visual 
+principal_comp <- prcomp(cluster_frame[,1:17],scale.=TRUE)
+round(principal_comp$rotation[,1:2],2) 
+
+#### plotting visual 
+autoplot(principal_comp, data = cluster_frame, colour = 'cluster')
+
+ggplot(cluster_frame, aes(x=sys_mean, y=dia_mean, color=cluster)) +
+    geom_point(shape=1) 
+```
+
+```{r}
+#### using information criteria:
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+dtree_class_information = train(as.factor(Longevity)~., 
+                              data = classTrain, method = "rpart", 
+                              parms = list(split = "information"), 
+                              trControl=trctrl, tuneLength = 10)
+
+#### using gini criteria:
+dtree_class_gini = train(as.factor(Longevity)~., 
+                       data = classTrain, method = "rpart", 
+                       parms = list(split = "gini"), 
+                       trControl=trctrl, tuneLength = 10)
+
+dtree_class_information$results
+dtree_class_gini$results
+
+
+#### Fairly similar performance, but information looks slightly better. 
+
+#### Looking at variable performance: 
+prp(dtree_class_gini$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+```
+
