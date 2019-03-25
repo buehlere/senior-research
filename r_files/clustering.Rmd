@@ -1,6 +1,8 @@
 ---
 title: "clustering"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +13,7 @@ library(dplyr)
 library(readr)
 library(Hmisc)
 library(ggfortify)
+library(rpart.plot)
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
 
@@ -32,9 +35,10 @@ plot(2:15, wss[2:15], type="b", xlab="Number of Clusters",
 ```{r}
 #### creating clusters and labeling 
 kmeans_fit = kmeans(cluster_frame, 4)
-#kmeans_fit$centers
-#kmeans_fit$size
+kmeans_fit$centers
+kmeans_fit$size
 cluster_frame$cluster <- as.factor(kmeans_fit$cluster)
+lin_frame_clean$cluster <- NULL
 ```
 
 
@@ -52,27 +56,45 @@ ggplot(cluster_frame, aes(x=sys_mean, y=dia_mean, color=cluster)) +
 ```
 
 ```{r}
-#### using information criteria:
-trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
-dtree_class_information = train(as.factor(Longevity)~., 
-                              data = classTrain, method = "rpart", 
-                              parms = list(split = "information"), 
-                              trControl=trctrl, tuneLength = 10)
 
-#### using gini criteria:
-dtree_class_gini = train(as.factor(Longevity)~., 
-                       data = classTrain, method = "rpart", 
-                       parms = list(split = "gini"), 
-                       trControl=trctrl, tuneLength = 10)
+sys_tree <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
+sys_tree$cluster <- kmeans_fit$cluster
 
-dtree_class_information$results
-dtree_class_gini$results
+for(i in 1:4)
+{
+  cluster_data <- sys_tree %>% filter(cluster == i)
+  #### using information criteria:
+  trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+  tree_information = train(sys_mean~., 
+                                data = cluster_data, method = "rpart", 
+                                parms = list(split = "information"), 
+                                trControl=trctrl, tuneLength = 10)
+  
+  assign(paste0("cluster_tree",i),tree_information)  
+}
+
 
 
 #### Fairly similar performance, but information looks slightly better. 
 
 #### Looking at variable performance: 
-prp(dtree_class_gini$finalModel, 
+  #### cluster 1 
+  prp(cluster_tree1$finalModel, 
+      box.palette = "Blues", 
+      tweak = 1.2)
+  
+  #### cluster 2 
+  prp(cluster_tree2$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+  
+  #### cluster 3 
+  prp(cluster_tree3$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+  
+  #### cluster 4 
+  prp(cluster_tree4$finalModel, 
     box.palette = "Blues", 
     tweak = 1.2)
 ```
