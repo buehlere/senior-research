@@ -172,6 +172,16 @@ for(i in 1:length(variables))
   lin_frame <- merge(lin_frame,eval(as.name(variables[i])),by=c("seqn"))
 }
 summary(lin_frame)
+
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(lin_frame))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(lin_frame)), size = 7218)
+
+lin_frame <- lin_frame[-train_ind, ]
+lin_frame_test <- lin_frame[train_ind, ]
 ```
 
 ```{r}

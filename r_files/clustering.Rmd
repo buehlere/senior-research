@@ -18,7 +18,7 @@ knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/
 ```
 
 ```{r}
-cluster_frame <- lin_frame_clean[,-c(13,19:23)]
+cluster_frame <- subset(lin_frame_clean, select=-c(ridreth3,riagendr,diq010,mult,asian,black,white,hispanic))
 #### Looking at best number of Clusters:
 #### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
 wss = list(15)
@@ -37,22 +37,21 @@ plot(2:15, wss[2:15], type="b", xlab="Number of Clusters",
 kmeans_fit = kmeans(cluster_frame, 4)
 kmeans_fit$centers
 kmeans_fit$size
-cluster_frame$cluster <- as.factor(kmeans_fit$cluster)
-lin_frame_clean$cluster <- NULL
 ```
 
 
 
 ```{r}
 #### principal componant for visual 
-principal_comp <- prcomp(cluster_frame[,1:17],scale.=TRUE)
+principal_comp <- prcomp(cluster_frame,scale.=TRUE)
 round(principal_comp$rotation[,1:2],2) 
+cluster_plot <- cluster_frame
+cluster_plot$cluster <- as.factor(kmeans_fit$cluster)
 
 #### plotting visual 
-autoplot(principal_comp, data = cluster_frame, colour = 'cluster')
+autoplot(principal_comp, data = cluster_plot, colour = 'cluster')
 
-ggplot(cluster_frame, aes(x=sys_mean, y=dia_mean, color=cluster)) +
-    geom_point(shape=1) 
+ggplot(cluster_plot, aes(x=sys_mean, y=dia_mean, color=cluster)) + geom_point()
 ```
 
 ```{r}
@@ -60,7 +59,7 @@ ggplot(cluster_frame, aes(x=sys_mean, y=dia_mean, color=cluster)) +
 sys_tree <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
 sys_tree$cluster <- kmeans_fit$cluster
 
-for(i in 1:4)
+for(i in 1:5)
 {
   cluster_data <- sys_tree %>% filter(cluster == i)
   #### using information criteria:
@@ -97,5 +96,11 @@ for(i in 1:4)
   prp(cluster_tree4$finalModel, 
     box.palette = "Blues", 
     tweak = 1.2)
+
+  
+#####CLUSTERING ON DEMOGRAPHIC 
+#####PREDICTION ON BIO 
+#####hypertension variable 
+##### assumption 
 ```
 

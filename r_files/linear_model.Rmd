@@ -19,9 +19,7 @@ library(car)
 
 ```{r}
 ####variable inspection from data_assembly.RMD
-cor(lin_frame_clean)
-summary(lin_frame_clean)
-summary(lin_frame_bp)
+
 ```
 
 
@@ -66,12 +64,6 @@ summary(bpsys_linear1)
   crPlots(res_not)
   crPlots(res_correct)
   
-  ####correcting bmxwaist
-  res_correct = lm(sys_mean~log(bmxwaist),sys_lin)
-  res_not = lm(sys_mean~(bmxwaist),sys_lin)
-  crPlots(res_not)
-  crPlots(res_correct)
-  
   ####correcting lbdhdd
   res_correct = lm(sys_mean~log(lbdhdd),sys_lin)
   res_not = lm(sys_mean~(lbdhdd),sys_lin)
@@ -97,9 +89,10 @@ summary(bpsys_linear1)
   crPlots(res_correct)
 
 #### model 2: linear regression
-bpsys_linear2 = lm(sys_mean~bmxarmc + log(bmxsad1) + log(bmxwaist) + riagendr + I(ridageyr^2) + log(lbdldl) + log(lbxtc) + I(lbxglu^(1/3)) + hispanic + black + ridageyr:white + ridageyr:lbdldl + bmxarmc:ridageyr, sys_lin)
+bpsys_linear2 = lm(sys_mean~bmxarmc + log(bmxsad1) + bmxwaist + riagendr + ridageyr + I(ridageyr^2) + log(lbdldl) + log(lbxtc) + I(lbxglu^(1/3)) + hispanic + black + ridageyr:white + ridageyr:lbdldl + bmxarmc:ridageyr, sys_lin)
 summary(bpsys_linear2)
 
+####keep in original for interaction and transformation 
   #### residual assumption 
   #### overal residual values 
   plot(bpsys_linear2$fitted.values,bpsys_linear2$residuals)
@@ -192,7 +185,7 @@ mse$predict_dia_mse <- (lin_frame_clean$dia_mean - dia_predictions)^2
 mse$predicted_dia  <- dia_predictions
 mse$true_dia <- lin_frame_bp$dia_mean
 mse$first_dia <- lin_frame_bp$bpxdi1
-mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
+mse$first_dia_mse <- (lin_frame_clean$dia_mean - lin_frame_bp$bpxdi1)^2
 
 ```
 
@@ -210,13 +203,12 @@ mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
   
   
 ### MSE frame and plot for dia
-  bar_dia <- mse %>% select(first_dia_mse, predict_dia_mse) %>% summarise(first_dia_mse = sum(first_dia_mse), predict_dia_mse = sum(predict_dia_mse))
+  bar_dia <- mse %>% select(first_dia_mse, predict_dia_mse) %>% summarise(first_dia_mse = mean(first_dia_mse), predict_dia_mse = mean(predict_dia_mse))
   bar_dia <- melt(bar_dia)
   
   ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
   geom_bar(stat="identity") + theme_minimal()
   
-  ###Scatter plot 
 ```
 
 ```{r}
@@ -244,7 +236,7 @@ mse$first_dia_mse <- (lin_frame_clean$sys_mean - lin_frame_bp$bpxdi1)^2
 ### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
 ### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
 ### Histogram of differences 
-ggplot(mse, aes(predicted_dia,predicted_sys))+
-    geom_point()
+ggplot(mse, aes(predicted_dia,true_dia))+
+    geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm")
 ```
 
