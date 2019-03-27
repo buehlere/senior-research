@@ -1,2 +1,2 @@
 # Senior Research
-predicting blood pressure 
+Blood Pressure Prediction and Outlier Detection using NHANES data
