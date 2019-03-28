@@ -52,27 +52,22 @@ summary(bpsys_linear1)
   #### qq-plot
   qqPlot(bpsys_linear1,ylab="Standardized Residuals", xlab="Normal Scores")
   
-  #### correcting year 
-  res_correct = lm(sys_mean~I(ridageyr^2),sys_lin)
-  res_not = lm(sys_mean~(ridageyr),sys_lin)
-  crPlots(res_not)
-  crPlots(res_correct)
-  
   #### correcting bmxsad1
   res_correct = lm(sys_mean~log(bmxsad1),sys_lin)
   res_not = lm(sys_mean~(bmxsad1),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
   
-  ####correcting lbdhdd
-  res_correct = lm(sys_mean~log(lbdhdd),sys_lin)
-  res_not = lm(sys_mean~(lbdhdd),sys_lin)
+  #### correcting bmxwt
+  res_correct = lm(sys_mean~log(bmxwt),sys_lin)
+  res_not = lm(sys_mean~(bmxwt),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
   
-  ####correcting lbxtc
-  res_correct = lm(sys_mean~log(lbxtc),sys_lin)
-  res_not = lm(sys_mean~(lbxtc),sys_lin)
+  
+  #### correcting year 
+  res_correct = lm(sys_mean~I(ridageyr^2),sys_lin)
+  res_not = lm(sys_mean~(ridageyr),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
   
@@ -81,15 +76,22 @@ summary(bpsys_linear1)
   res_not = lm(sys_mean~(lbdldl),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
+
+  
+  ####correcting lbxtc
+  res_correct = lm(sys_mean~log(lbxtc),sys_lin)
+  res_not = lm(sys_mean~(lbxtc),sys_lin)
+  crPlots(res_not)
+  crPlots(res_correct)
   
   ####correcting lbxglu
-  res_correct = lm(sys_mean~I(lbxglu^(1/3)),sys_lin)
+  res_correct = lm(sys_mean~log(lbxglu),sys_lin)
   res_not = lm(sys_mean~(lbxglu),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
 
 #### model 2: linear regression
-bpsys_linear2 = lm(sys_mean~bmxarmc + log(bmxsad1) + bmxwaist + riagendr + ridageyr + I(ridageyr^2) + log(lbdldl) + log(lbxtc) + I(lbxglu^(1/3)) + hispanic + black + ridageyr:white + ridageyr:lbdldl + bmxarmc:ridageyr, sys_lin)
+bpsys_linear2 = lm(sys_mean~ bmxarmc + bmxsad1 + bmxht + bmxwaist + bmxwt + riagendr + ridageyr + I(ridageyr^2) + hispanic + white + black + diq010 + lbdldl + log(lbxtc) + log(lbxglu) + bpq020 + bpq040a + bmxarmc:ridageyr + riagendr:lbdldl + riagendr:lbxglu + bmxsad1:diq010 + riagendr:ridageyr + bmxsad1:bpq040a  + ridageyr:white + ridageyr:diq010 + ridageyr:lbdldl  , sys_lin)
 summary(bpsys_linear2)
 
 ####keep in original for interaction and transformation 
@@ -159,9 +161,21 @@ summary(bpdia_linear1)
   res_not = lm(sys_mean~(lbxtc),sys_lin)
   crPlots(res_not)
   crPlots(res_correct)
+  
+  #### correcting bmxwt
+  res_correct = lm(sys_mean~log(bmxwt),sys_lin)
+  res_not = lm(sys_mean~(bmxwt),sys_lin)
+  crPlots(res_not)
+  crPlots(res_correct)
+  
+  #### correcting bmxbmi
+  res_correct = lm(sys_mean~log(bmxbmi),sys_lin)
+  res_not = lm(sys_mean~(bmxbmi),sys_lin)
+  crPlots(res_not)
+  crPlots(res_correct)
 
 #### model 2: linear regression
-bpdia_linear2 = lm(dia_mean~I(ridageyr^2)+log(lbxtc)+log(lbdldl)+bmxleg+bmxsad1+riagendr+diq010+lbdhdd+hispanic+asian+bmxleg:ridageyr+bmxwaist:ridageyr+ridageyr:diq010+ridageyr:lbdhdd,dia_lin)
+bpdia_linear2 = lm(dia_mean~ bmxarmc + bmxsad1 + log(bmxwt) + riagendr + ridageyr + I(ridageyr^2) + white + black + asian + diq010 + log(lbdldl) + lbxtc + bpq020 + bpq040a + ridageyr:white +  bmxsad1:ridageyr + ridageyr:bpq040a + riagendr:lbdldl,dia_lin)
 summary(bpdia_linear2)
 
   #### residual assumption 
@@ -203,11 +217,15 @@ mse$first_dia_mse <- (lin_frame_clean$dia_mean - lin_frame_bp$bpxdi1)^2
   
   
 ### MSE frame and plot for dia
-  bar_dia <- mse %>% select(first_dia_mse, predict_dia_mse) %>% summarise(first_dia_mse = mean(first_dia_mse), predict_dia_mse = mean(predict_dia_mse))
+  bar_dia <- mse %>% select(predict_sys_mse, predict_dia_mse) %>% summarise(predict_sys_mse = mean(predict_sys_mse), predict_dia_mse = mean(predict_dia_mse))
   bar_dia <- melt(bar_dia)
-  
+  bar_dia[,1] <- as.character(bar_dia[,1])
+  bar_dia[1,1] <- "Systolic Blood Pressure"
+  bar_dia[2,1] <- "Diastolic Blood Pressure"
+  bar_dia[,1] <- as.factor(bar_dia[,1])
   ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-  geom_bar(stat="identity") + theme_minimal()
+  geom_bar(stat="identity") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
+   x="Blood Pressure", y="Mean Squared Error")
   
 ```
 
@@ -226,7 +244,7 @@ mse$first_dia_mse <- (lin_frame_clean$dia_mean - lin_frame_bp$bpxdi1)^2
   bar_sys <- melt(bar_sys)
   
   ggplot(bar_sys, aes(x=variable, y=value, fill = variable)) +
-  geom_bar(stat="identity") + theme_minimal()
+  geom_bar(stat="identity") + theme_minimal() 
 
   
   
@@ -237,6 +255,11 @@ mse$first_dia_mse <- (lin_frame_clean$dia_mean - lin_frame_bp$bpxdi1)^2
 ### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
 ### Histogram of differences 
 ggplot(mse, aes(predicted_dia,true_dia))+
-    geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm")
+    geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm")  + labs(title="True Diastolic Blood Pressure compared to \nPredicted Diastolic Blood Pressure", 
+   x="Predicted Diastolic", y="True Diastolic")
+
+ggplot(mse, aes(predicted_sys,true_sys))+
+    geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm") + labs(title="True Systolic Blood Pressure compared to \nPredicted Systolic Blood Pressure", 
+   x="Systolic Diastolic", y="Systolic Diastolic")
 ```
 
