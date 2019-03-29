@@ -13,7 +13,6 @@ library(dplyr)
 library(readr)
 library(Hmisc)
 library(ggfortify)
-library(fastDummies)
 #### Setting working directory 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
@@ -99,14 +98,20 @@ for(i in 2:length(years))
   diabetes <- bind_rows(diabetes,get(paste0("diabetes",years[i])))    
 }
 
-####bp_med
-bp_med <- bp_med_1999.XPT
+
+####hypertension
+hypertension <- hypertension_1999.XPT
 for(i in 2:length(years))
 {
-  bp_med <- bind_rows(bp_med,get(paste0("bp_med",years[i])))    
+  hypertension <- bind_rows(hypertension,get(paste0("hypertension",years[i])))    
 }
 
-####smoking 
+####smoking
+smoking <- smoking_1999.XPT
+for(i in 2:length(years))
+{
+  smoking <- bind_rows(smoking,get(paste0("smoking",years[i])))    
+}
 
 ####total and good cholesterol 
 cholesterol <- merge(get(paste0("cholesterol",years[3])),get(paste0("good_cholesterol",years[3])))
@@ -128,7 +133,7 @@ cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2003.XPT)
 #### DV: Blood Pressure 
   ### selecting blood relevant blood pressures 
   dv_bp <- bloodpressure %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
-  
+
   ### throwing out outliers
   dv_bp <- dv_bp %>% filter(bpxsy1 != 0 & bpxsy2 != 0 & bpxsy3 != 0 & bpxdi1 != 0 & bpxdi2 != 0 & bpxdi3 != 0 & bpxsy1 < 200 & bpxsy2 < 200 & bpxsy3 < 200 & bpxdi1 < 200 & bpxdi2,bpxdi3 < 200 & bpxdi1 > 27 & bpxdi2 > 27 & bpxdi3 > 27)
   summary(dv_bp)
@@ -145,28 +150,53 @@ demo_variables <- demographic %>% select(seqn,riagendr, ridageyr,ridreth3)
 
 demo_variables$ridreth3 <- ifelse(demo_variables$ridreth3 <= 2, 1,ifelse(demo_variables$ridreth3 == 3,2,ifelse(demo_variables$ridreth3 == 4,3, ifelse(demo_variables$ridreth3 == 6, 4, ifelse(demo_variables$ridreth3 == 7,5,NA)))))
 
+#### dumming out 
+  #### race
+  demo_variables <- demo_variables %>% mutate(hispanic = ifelse(ridreth3 == 1,1,0),white = ifelse(ridreth3 == 2,1,0),black = ifelse(ridreth3 == 3,1,0),asian = ifelse(ridreth3 == 4,1,0),mult = ifelse(ridreth3 == 5,1,0))
+  
+  #### gender 
+  demo_variables$riagendr[demo_variables$riagendr == 2] <- 0  
+
 #### IV: Diabetes 
 dia_variables <- diabetes %>% select(seqn,diq010) %>% filter(diq010 <= 3)
 summary(dia_variables)
-dia_variables$diq010[dia_variables$diq010 == 3] <- 1 
+dia_variables$diq010[dia_variables$diq010 == 3] <- 1  
+dia_variables$diq010[dia_variables$diq010 == 1] <- 1
+dia_variables$diq010[dia_variables$diq010 == 2] <- 0
 
 #### IV: Cholesteral 
 chol_variables <- cholesterol %>% select(seqn,lbdhdd,lbxtc)
 bad_chol_variables <- bad_cholesterol %>% select(seqn,lbdldl)
 
-#### IV: Kidney Health
-#####kid_variables <- kidney_health %>% select(seqn, kiq022)
+#### IV: Smoking 
+  #### only yes and nos 
+  #smoking_variables <- smoking %>% select(seqn,smq020,smq040)
+  #smoking_variables <- smoking_variables %>% filter(smq020 == 1 | smq020 == 2)
+  
+  #### nas are nos for smoking 
+  #smoking_variables$smq040[is.na(smoking_variables$smq040)] <- 0
+  
+  #### dumming out smoking 
+  #smoking_variables$smq040 <- ifelse(smoking_variables$smq040 == 0, 0, ifelse(smoking_variables$smq040 == 1, 1, ifelse(smoking_variables$smq040 == 2, 1, ifelse(smoking_variables$smq040 == 3,0, ifelse(smoking_variables$smq040 == 7,NA,NA)))))
 
 #### IV: Hypertension Medication
-####bp_med_variables <- bp_med %>% select(seqn,bpq040a)
-
+hypertension_variables <- hypertension %>% select(seqn,bpq020,bpq040a)
+  #### only yes and nos 
+  hypertension_variables <- hypertension_variables %>% filter(bpq020 == 1 | bpq020 == 2)
+  hypertension_variables$bpq020[hypertension_variables$bpq020 == 2] <- 0
+  
+  #### nas are nos for hypertension 
+  hypertension_variables$bpq040a[is.na(hypertension_variables$bpq040a)] <- 0
+  
+  #### dumming out hypertension
+  hypertension_variables$bpq040a <- ifelse(hypertension_variables$bpq040a == 0, 0, ifelse(hypertension_variables$bpq040a == 1, 1, ifelse(hypertension_variables$bpq040a == 2, 0, ifelse(hypertension_variables$bpq040a == 7,NA, ifelse(hypertension_variables$smq040 == 9,NA,NA)))))
 
 ####IV: glucose 
 glu_variables <- glucose %>% select(seqn,lbxglu)
 
 ####merge 
 lin_frame <- dv_bp 
-variables <- c("bmi_variables","demo_variables","dia_variables","bad_chol_variables","chol_variables","glu_variables")
+variables <- c("bmi_variables","demo_variables","dia_variables","bad_chol_variables","chol_variables","glu_variables","hypertension_variables")
 for(i in 1:length(variables))
 {
   lin_frame <- merge(lin_frame,eval(as.name(variables[i])),by=c("seqn"))
@@ -191,9 +221,6 @@ lin_frame_clean <- subset(lin_frame, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,
 lin_frame_clean <- na.omit(lin_frame_clean)
 
 
-#### dumming out 
-lin_frame_clean <- lin_frame_clean %>% mutate(hispanic = ifelse(ridreth3 == 1,1,0),white = ifelse(ridreth3 == 2,1,0),black = ifelse(ridreth3 == 3,1,0),asian = ifelse(ridreth3 == 4,1,0),mult = ifelse(ridreth3 == 5,1,0))
-summary(lin_frame_clean)
 
 #### Blood Pressure Frame 
 lin_frame_bp <- na.omit(lin_frame)

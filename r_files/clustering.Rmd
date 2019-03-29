@@ -22,80 +22,69 @@ knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/
 
 ```{r}
 # cluster Frame 
-cluster_frame <- subset(lin_frame_clean, select=c(sys_mean,dia_mean,riagendr,diq010,mult,asian,black,white,hispanic,ridageyr,bpq040a, bpq020))
+cluster_frame <- subset(lin_frame_clean, select=c(riagendr,diq010,ridreth3,ridageyr,bpq040a, bpq020))
+cluster_frame$riagendr <- as.factor(cluster_frame$riagendr)
+cluster_frame$ridreth3 <- as.factor(cluster_frame$ridreth3)
+cluster_frame$diq010 <- as.factor(cluster_frame$diq010)
+cluster_frame$bpq040a <- as.factor(cluster_frame$bpq040a)
+cluster_frame$bpq020 <- as.factor(cluster_frame$bpq020)
 
 #### Turning Blood Pressure into Categorical Data
 
 #### Systolic
-cluster_frame$bp_cat <- ifelse(cluster_frame$sys_mean < 120 & cluster_frame$dia_mean < 80, 1 , ifelse(cluster_frame$sys_mean > 120 & cluster_frame$sys_mean < 129 & cluster_frame$dia_mean < 80, 2, ifelse(cluster_frame$sys_mean > 130 & cluster_frame$sys_mean < 139 | cluster_frame$dia_mean > 80 & cluster_frame$dia_mean < 89, 3, ifelse(cluster_frame$sys_mean >= 140 | cluster_frame$dia_mean >= 90, 4,0))))
+#cluster_frame$bp_cat <- ifelse(cluster_frame$sys_mean < 120 & cluster_frame$dia_mean < 80, 1 , ifelse(cluster_frame$sys_mean > 120 & cluster_frame$sys_mean < 129 & cluster_frame$dia_mean < 80, 2, ifelse(cluster_frame$sys_mean > 130 & cluster_frame$sys_mean < 139 | cluster_frame$dia_mean > 80 & cluster_frame$dia_mean < 89, 3, ifelse(cluster_frame$sys_mean >= 140 | cluster_frame$dia_mean >= 90, 4,0))))
 
-summary(cluster_frame$bp_cat)
-cluster_frame$sys_mean <- NULL 
-cluster_frame$dia_mean <- NULL 
+#summary(cluster_frame$bp_cat)
+#cluster_frame$sys_mean <- NULL 
+#cluster_frame$dia_mean <- NULL 
 
 #### Turning Age into categorical Data
-cluster_frame$ridageyr[cluster_frame$ridageyr>=90 & cluster_frame$ridageyr<=99] <- 9
-cluster_frame$ridageyr[cluster_frame$ridageyr>=80 & cluster_frame$ridageyr<=89] <- 8
-cluster_frame$ridageyr[cluster_frame$ridageyr>=70 & cluster_frame$ridageyr<=79] <- 7
-cluster_frame$ridageyr[cluster_frame$ridageyr>=60 & cluster_frame$ridageyr<=69] <- 6
-cluster_frame$ridageyr[cluster_frame$ridageyr>=50 & cluster_frame$ridageyr<=59] <- 5
-cluster_frame$ridageyr[cluster_frame$ridageyr>=40 & cluster_frame$ridageyr<=49] <- 4
-cluster_frame$ridageyr[cluster_frame$ridageyr>=30 & cluster_frame$ridageyr<=39] <- 3
-cluster_frame$ridageyr[cluster_frame$ridageyr>=20 & cluster_frame$ridageyr<=29] <- 2
-cluster_frame$ridageyr[cluster_frame$ridageyr>=10 & cluster_frame$ridageyr<=19] <- 1
-summary(cluster_frame$ridageyr)
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=90 & cluster_frame$ridageyr<=99] <- 9
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=80 & cluster_frame$ridageyr<=89] <- 8
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=70 & cluster_frame$ridageyr<=79] <- 7
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=60 & cluster_frame$ridageyr<=69] <- 6
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=50 & cluster_frame$ridageyr<=59] <- 5
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=40 & cluster_frame$ridageyr<=49] <- 4
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=30 & cluster_frame$ridageyr<=39] <- 3
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=20 & cluster_frame$ridageyr<=29] <- 2
+#cluster_frame$ridageyr[cluster_frame$ridageyr>=10 & cluster_frame$ridageyr<=19] <- 1
+#summary(cluster_frame$ridageyr)
 
 ```
 
 ```{r}
 #### Looking at best number of Clusters:
 #### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
-wss = list(20)
-for (k in 2:20){ 
-  wss[k] = kproto(cluster_frame, k, iter.max = 10)$withindiff
+wss = list(15)
+for (k in 2:15){ 
+  wss[k] = sum(kproto(cluster_frame, k, iter.max = 1000,nstart = 3)$tot.withinss)
 }
 
 ### plot results 
-plot(2:20, wss[2:20], type="b", xlab="Number of Clusters",
+plot(2:15, wss[2:15], type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares")
 ```
 
 
 ```{r}
 #### creating clusters and labeling 
-kmodes_fit = kmodes(cluster_frame, 4,100)
+kmodes_fit = kmodes(cluster_frame, 4,iter.max = 1000000)
 kmodes_fit$size
 kmodes_fit$modes
+
+
+kproto_fit = kproto(cluster_frame, 4,iter.max = 1000000,nstart = 3)
+kproto_fit$size
+kproto_fit$centers
+
 ```
 
 
-
-```{r}
-#### Looking at best number of Clusters:
-#### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
-wss = list(20)
-for (k in 2:20){ 
-  wss[k] = kproto(, k, lambda = NULL, iter.max = 10,
-  nstart = 1)$tot.withinss
-}
-
-### plot results 
-plot(2:20, wss[2:20], type="b", xlab="Number of Clusters",
-     ylab="Within groups sum of squares")
-```
-
-
-```{r}
-#### creating clusters and labeling 
-kmodes_fit = kmodes(cluster_frame, 4,100)
-kmodes_fit$size
-kmodes_fit$modes
-```
 
 ```{r}
 
 #### principal componant for visual 
-pc_frame <- subset(lin_frame_clean, select=-c(mult,riagendr,diq010,mult,asian,black,white,hispanic,bpq040a, bpq020, ridreth3))
+pc_frame <- subset(lin_frame_clean, select=-c(ridreth3))
 
 principal_comp <- prcomp(pc_frame,scale.=TRUE)
 round(principal_comp$rotation[,1:2],2) 
@@ -104,7 +93,7 @@ round(principal_comp$rotation[,1:2],2)
 #### plotting visual 
 
 cluster_plot <- pc_frame
-cluster_plot$cluster <- as.factor(kmodes_fit$cluster)
+cluster_plot$cluster <- as.factor(kproto_fit$cluster)
 
 autoplot(principal_comp, data = cluster_plot, colour = 'cluster',loadings = TRUE, loadings.colour = 'blue',
          loadings.label = TRUE, loadings.label.size = 3)
@@ -117,9 +106,9 @@ ggplot(cluster_plot, aes(x=sys_mean, y=dia_mean, color=cluster)) + geom_point()
 
 ```{r}
 
-sys_tree <- subset(cluster_plot, select=-c(dia_mean,ridreth3,mult,riagendr,diq010,mult,asian,black,white,hispanic,ridageyr,bpq040a, bpq020))
+sys_tree <- subset(cluster_plot, select=-c(dia_mean,mult,riagendr,diq010,mult,asian,black,white,hispanic,ridageyr,bpq040a, bpq020))
 
-for(i in 1:5)
+for(i in 1:4)
 {
   cluster_data <- sys_tree %>% filter(cluster == i)
   #### using information criteria:
