@@ -14,7 +14,6 @@ library(readr)
 library(Hmisc)
 library(ggfortify)
 library(rpart.plot)
-library(klaR)
 library(clustMixType)
 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
@@ -57,7 +56,7 @@ cluster_frame$bpq020 <- as.factor(cluster_frame$bpq020)
 #### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
 wss = list(15)
 for (k in 2:15){ 
-  wss[k] = sum(kproto(cluster_frame, k, iter.max = 1000,nstart = 3)$tot.withinss)
+  wss[k] = kproto(cluster_frame, k, iter.max = 100,nstart = 3)$tot.withinss
 }
 
 ### plot results 
@@ -68,12 +67,7 @@ plot(2:15, wss[2:15], type="b", xlab="Number of Clusters",
 
 ```{r}
 #### creating clusters and labeling 
-kmodes_fit = kmodes(cluster_frame, 4,iter.max = 1000000)
-kmodes_fit$size
-kmodes_fit$modes
-
-
-kproto_fit = kproto(cluster_frame, 4,iter.max = 1000000,nstart = 3)
+kproto_fit = kproto(cluster_frame, 4,iter.max = 100,nstart = 3)
 kproto_fit$size
 kproto_fit$centers
 
@@ -91,70 +85,21 @@ round(principal_comp$rotation[,1:2],2)
 
 
 #### plotting visual 
+#### making cluster frame
+cluster_final <- pc_frame
+cluster_final$cluster <- as.factor(kproto_fit$cluster)
 
-cluster_plot <- pc_frame
-cluster_plot$cluster <- as.factor(kproto_fit$cluster)
-
-autoplot(principal_comp, data = cluster_plot, colour = 'cluster',loadings = TRUE, loadings.colour = 'blue',
+autoplot(principal_comp, data = cluster_final, colour = 'cluster',loadings = TRUE, loadings.colour = 'blue',
          loadings.label = TRUE, loadings.label.size = 3)
 
-ggplot(cluster_plot, aes(x=sys_mean, y=dia_mean, color=cluster)) + geom_point()
+ggplot(cluster_final, aes(x=sys_mean, y=dia_mean, color=cluster)) + geom_point()
+
+#### making a new id column 
+cluster_final$id <- seq.int(nrow(lin_frame_clean))
 ```
 
 
 
 
-```{r}
 
-sys_tree <- subset(cluster_plot, select=-c(dia_mean,mult,riagendr,diq010,mult,asian,black,white,hispanic,ridageyr,bpq040a, bpq020))
-
-for(i in 1:4)
-{
-  cluster_data <- sys_tree %>% filter(cluster == i)
-  #### using information criteria:
-  trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
-  tree_information = train(sys_mean~., 
-                                data = cluster_data, method = "rpart", 
-                                parms = list(split = "information"), 
-                                trControl=trctrl, tuneLength = 10)
-  
-  assign(paste0("cluster_tree",i),tree_information)  
-}
-
-
-
-#### Fairly similar performance, but information looks slightly better. 
-
-#### Looking at variable performance: 
-  #### cluster 1 
-  prp(cluster_tree1$finalModel, 
-      box.palette = "Blues", 
-      tweak = 1.2)
-  
-  #### cluster 2 
-  prp(cluster_tree2$finalModel, 
-    box.palette = "Blues", 
-    tweak = 1.2)
-  
-  #### cluster 3 
-  prp(cluster_tree3$finalModel, 
-    box.palette = "Blues", 
-    tweak = 1.2)
-  
-  #### cluster 4 
-  prp(cluster_tree4$finalModel, 
-    box.palette = "Blues", 
-    tweak = 1.2)
-
-  
-#####CLUSTERING ON DEMOGRAPHIC 
-#####PREDICTION ON BIO 
-#####assumption only on main linear model 
-  
-  
-
-
-
-
-```
 

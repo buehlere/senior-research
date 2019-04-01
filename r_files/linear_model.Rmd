@@ -109,12 +109,12 @@ summary(bpsys_linear2)
 
 
 #### prediction 
-sys_predictions = predict(bpsys_linear2, newdata = lin_frame_clean)
+sys_predictions = predict(bpsys_linear2, newdata = lin_frame_test)
 summary(sys_predictions)
-summary(lin_frame_clean$sys_mean)
+summary(lin_frame_test$sys_mean)
 
 ### MSE data frame 
-mse <- data.frame(predict_sys_mse = (lin_frame_clean$sys_mean - sys_predictions)^2, predicted_sys = sys_predictions,true_sys = lin_frame_bp$sys_mean, first_sys = lin_frame_bp$bpxsy1, first_sys_mse = (lin_frame_clean$sys_mean - lin_frame_bp$bpxsy1)^2 ) 
+mse <- data.frame(id = seq.int(nrow(lin_frame_test)), true_sys = lin_frame_test$sys_mean, true_dia = lin_frame_test$dia_mean, sys_lin_mse = (lin_frame_test$sys_mean - sys_predictions)^2, sys_lin = sys_predictions) 
 
 ```
 
@@ -190,16 +190,15 @@ summary(bpdia_linear2)
   qqPlot(bpdia_linear2,ylab="Standardized Residuals", xlab="Normal Scores")
 
 #### prediction 
-dia_predictions = predict(bpdia_linear2, newdata = lin_frame_clean)
+dia_predictions = predict(bpdia_linear2, newdata = lin_frame_test)
 summary(dia_predictions)
-summary(lin_frame_clean$dia_mean)
+summary(lin_frame_test$dia_mean)
 
 #### MSE Frame update
-mse$predict_dia_mse <- (lin_frame_clean$dia_mean - dia_predictions)^2
-mse$predicted_dia  <- dia_predictions
-mse$true_dia <- lin_frame_bp$dia_mean
-mse$first_dia <- lin_frame_bp$bpxdi1
-mse$first_dia_mse <- (lin_frame_clean$dia_mean - lin_frame_bp$bpxdi1)^2
+mse$dia_lin_mse <- (lin_frame_test$dia_mean - dia_predictions)^2
+mse$dia_lin  <- dia_predictions
+
+
 
 ```
 
@@ -217,7 +216,7 @@ mse$first_dia_mse <- (lin_frame_clean$dia_mean - lin_frame_bp$bpxdi1)^2
   
   
 ### MSE frame and plot for dia
-  bar_dia <- mse %>% select(predict_sys_mse, predict_dia_mse) %>% summarise(predict_sys_mse = mean(predict_sys_mse), predict_dia_mse = mean(predict_dia_mse))
+  bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse) %>% summarise(predict_sys_mse = mean(sys_lin_mse), predict_dia_mse = mean(dia_lin_mse))
   bar_dia <- melt(bar_dia)
   bar_dia[,1] <- as.character(bar_dia[,1])
   bar_dia[1,1] <- "Systolic Blood Pressure"
@@ -260,6 +259,6 @@ ggplot(mse, aes(predicted_dia,true_dia))+
 
 ggplot(mse, aes(predicted_sys,true_sys))+
     geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm") + labs(title="True Systolic Blood Pressure compared to \nPredicted Systolic Blood Pressure", 
-   x="Systolic Diastolic", y="Systolic Diastolic")
+   x="Predicted Systolic", y="True Systolic")
 ```
 

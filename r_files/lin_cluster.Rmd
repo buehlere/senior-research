@@ -1,0 +1,44 @@
+---
+title: "lin_cluster"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+library(rpart.plot)
+library(clustMixType)
+
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
+```
+
+```{r}
+
+#### model of Cluster 1: linear regression
+cluster_data <- cluster_train %>% filter(cluster == 1)
+sys_cluster1 = lm(sys_mean~., cluster_train)
+summary(bpsys_linear2)
+
+####keep in original for interaction and transformation 
+  #### residual assumption 
+  #### overal residual values 
+  plot(bpsys_linear2$fitted.values,bpsys_linear2$residuals)
+  
+  #### all residuals 
+  crPlots(bpsys_linear2)
+
+  
+  #### qq-plot
+  qqPlot(bpsys_linear2,ylab="Standardized Residuals", xlab="Normal Scores")
+
+
+
+#### prediction 
+sys_predictions = predict(bpsys_linear2, newdata = lin_frame_clean)
+```
+

@@ -207,14 +207,20 @@ summary(lin_frame)
 smp_size <- floor(0.75 * nrow(lin_frame))
 
 ## set the seed to make your partition reproducible
-set.seed(123)
-train_ind <- sample(seq_len(nrow(lin_frame)), size = 7218)
+#set.seed(123)
+train_ind <- sample(seq_len(nrow(lin_frame)), size = smp_size)
 
-lin_frame <- lin_frame[-train_ind, ]
-lin_frame_test <- lin_frame[train_ind, ]
+lin_frame <- lin_frame[train_ind, ]
+lin_frame_test <- lin_frame[-train_ind, ]
+
 ```
 
 ```{r}
+#### test frame 
+lin_frame_test$bmxrecum <- NULL 
+lin_frame_test <- subset(lin_frame_test, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 
+lin_frame_test <- na.omit(lin_frame_test)
+lin_frame_test$id <- seq.int(nrow(lin_frame_test))
 ####Prediction Frame 
 lin_frame$bmxrecum <- NULL 
 lin_frame_clean <- subset(lin_frame, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 
