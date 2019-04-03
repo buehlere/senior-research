@@ -1,0 +1,141 @@
+---
+title: "newer method"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+library(rpart.plot)
+library(clustMixType)
+library(glmnet)
+
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
+```
+
+```{r}
+# creating matrices for glmnet: 
+#### prediction frame 
+lasso_train_sys <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
+lasso_train_sys$ridageyr <- (lasso_train_sys$ridageyr)^2
+#### setting up matrix 
+f <- as.formula(sys_mean ~ .)
+x <- model.matrix(f, lasso_train_sys)[, -1]
+y <- lin_frame_clean$sys_mean
+
+#### running LASSO : 
+fullLasso <- cv.glmnet(x,y, 
+                     alpha = 1)
+
+
+
+#-----------------------------------------------------------
+
+#### analysis of LASSO: 
+#### plot of variable coefficients against lambda
+plot(fullLasso$glmnet.fit, "lambda")
+
+#### plot of MSE against lambda 
+plot(fullLasso)
+
+#### Best Lambda
+fullLasso$lambda.min
+
+#### Names of Selected Coefficients
+fullCoef <- coef(fullLasso, s = "lambda.min")
+names <- data.frame(name = fullCoef@Dimnames[[1]][fullCoef@i + 1], 
+                    coefficient = fullCoef@x)
+names
+#-----------------------------------------------------------
+
+#### predictions: 
+#### Setting up 
+test_matrix <- subset(lin_frame_test, select=-c(dia_mean,ridreth3,mult,id,cluster))
+test_matrix$ridageyr <- (test_matrix$ridageyr)^2
+f <- as.formula(sys_mean ~ .)
+test_matrix <- model.matrix(f, test_matrix)[, -1]
+
+####Predicting 
+lasso_pred <- predict(fullLasso,s = "lambda.min", test_matrix)
+
+#### Analysis 
+summary(lasso_pred)
+
+
+mse$sys_las_mse <- (lin_frame_test$sys_mean - lasso_pred)^2
+mse$sys_las  <- lasso_pred
+#-----------------------------------------------------------
+```
+
+
+```{r}
+# creating matrices for glmnet: 
+#### prediction frame 
+lasso_train_dia <- subset(lin_frame_clean, select=-c(sys_mean,ridreth3,mult))
+lasso_train_dia$ridageyr <- (lasso_train_dia$ridageyr)^2
+#### setting up matrix 
+f <- as.formula(dia_mean ~ .)
+x <- model.matrix(f, lasso_train_dia)[, -1]
+y <- lin_frame_clean$dia_mean
+
+#### running LASSO : 
+fullLasso <- cv.glmnet(x,y, 
+                     alpha = 1)
+
+
+
+#-----------------------------------------------------------
+
+#### analysis of LASSO: 
+#### plot of variable coefficients against lambda
+plot(fullLasso$glmnet.fit, "lambda")
+
+#### plot of MSE against lambda 
+plot(fullLasso)
+
+#### Best Lambda
+fullLasso$lambda.min
+
+#### Names of Selected Coefficients
+fullCoef <- coef(fullLasso, s = "lambda.min")
+names <- data.frame(name = fullCoef@Dimnames[[1]][fullCoef@i + 1], 
+                    coefficient = fullCoef@x)
+names
+#-----------------------------------------------------------
+
+#### predictions: 
+#### Setting up 
+test_matrix <- subset(lin_frame_test, select=-c(sys_mean,ridreth3,mult,id,cluster))
+test_matrix$ridageyr <- (test_matrix$ridageyr)^2
+f <- as.formula(dia_mean ~ .)
+test_matrix <- model.matrix(f, test_matrix)[, -1]
+
+####Predicting 
+lasso_pred <- predict(fullLasso,s = "lambda.min", test_matrix)
+
+#### Analysis 
+summary(lasso_pred)
+
+
+mse$dia_las_mse <- (lin_frame_test$dia_mean - lasso_pred)^2
+mse$dia_las  <- lasso_pred
+#-----------------------------------------------------------
+```
+
+```{r}
+bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse,sys_las_mse, dia_las_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse), sys_lass_mse = mean(sys_las_mse), dia_las_mse = mean(dia_las_mse))
+bar_dia <- melt(bar_dia)
+
+
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
+   x="Blood Pressure", y="Mean Squared Error")
+```
+

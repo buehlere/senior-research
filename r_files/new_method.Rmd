@@ -1,0 +1,78 @@
+---
+title: "newer method"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+library(rpart.plot)
+library(clustMixType)
+
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
+```
+
+```{r}
+# creating matrices for glmnet: 
+f <- as.formula(lr ~ .)
+x <- model.matrix(f, fullTrain)[, -1]
+y <- log(fullTrain$lr)
+
+#### running LASSO : 
+startLasso <- Sys.time()
+fullLasso <- cv.glmnet(x,y, 
+                     alpha = 1)
+
+endLasso <- Sys.time()
+
+endLasso - startLasso
+
+#-----------------------------------------------------------
+
+#### analysis of LASSO: 
+#### plot of variable coefficients against lambda
+plot(fullLasso$glmnet.fit, "lambda")
+
+#### plot of MSE against lambda 
+plot(fullLasso)
+
+#### Best Lambda
+fullLasso$lambda.min
+
+#### Names of Selected Coefficients
+fullCoef <- coef(fullLasso, s = "lambda.min")
+names <- data.frame(name = fullCoef@Dimnames[[1]][fullCoef@i + 1], 
+                    coefficient = fullCoef@x)
+names
+#-----------------------------------------------------------
+
+#### predictions: 
+#### Setting up 
+predResultsPositivesTest <- predResultsPositives 
+#predResultsPositivesTest$Industry_Group <- NULL
+
+predResultsPositivesTest$prediction <- NULL 
+
+f <- as.formula(lr ~ .)
+matrixTest <- model.matrix(f, predResultsPositivesTest)[, -1]
+
+####Predicting 
+fullLassoPred <- predict(fullLasso,s = "lambda.min", matrixTest)
+
+#### Analysis 
+summary(exp(fullLassoPred))
+hist(fullLassoPred)
+
+MSEs[1] <- mean((exp(fullLassoPred) - predResultsPositivesTest$lr)^2)
+MSEs[1]
+
+MDSE[1] <- median((exp(fullLassoPred) - predResultsPositivesTest$lr)^2)
+MDSE[1]
+#-----------------------------------------------------------
+```
+
