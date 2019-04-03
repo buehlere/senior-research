@@ -19,26 +19,108 @@ knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/
 
 ```{r}
 
-#### model of Cluster 1: linear regression
-cluster_data <- cluster_train %>% filter(cluster == 1)
-sys_cluster1 = lm(sys_mean~., cluster_train)
-summary(bpsys_linear2)
 
-####keep in original for interaction and transformation 
-  #### residual assumption 
-  #### overal residual values 
-  plot(bpsys_linear2$fitted.values,bpsys_linear2$residuals)
-  
-  #### all residuals 
-  crPlots(bpsys_linear2)
+for(i in 1:4)
+{
+  cluster_train <- cluster_final %>% filter(cluster == i)
+  cluster_train <- subset(cluster_train, select=-c(dia_mean,id,cluster,mult))
 
-  
-  #### qq-plot
-  qqPlot(bpsys_linear2,ylab="Standardized Residuals", xlab="Normal Scores")
+  #### using information criteria:
+  cluster_lin_sys = lm(sys_mean~I(ridageyr^2)+., cluster_train)
+  assign(paste0("cluster_lin_sys",i),cluster_lin_sys)
+
+}
+
+#### prediction for cluster 1
+cluster_frame1 <- lin_frame_test %>% filter(cluster == 1) 
+lin1_predictions_sys = predict(cluster_lin_sys1, newdata = cluster_frame1)
+summary(lin1_predictions_sys)
 
 
+#### prediction for cluster 2
+cluster_frame2 <- lin_frame_test %>% filter(cluster == 2)
+lin2_predictions_sys = predict(cluster_lin_sys2, newdata = cluster_frame2)
+summary(lin2_predictions_sys)
 
-#### prediction 
-sys_predictions = predict(bpsys_linear2, newdata = lin_frame_clean)
+#### prediction for cluster 3
+cluster_frame3 <- lin_frame_test %>% filter(cluster == 3)
+lin3_predictions_sys = predict(cluster_lin_sys3, newdata = cluster_frame3)
+summary(lin3_predictions_sys)
+
+#### prediction for cluster 4
+cluster_frame4 <- lin_frame_test %>% filter(cluster == 4)
+lin4_predictions_sys = predict(cluster_lin_sys4, newdata = cluster_frame4)
+summary(lin4_predictions_sys)
+
+#### one vector of mse 
+a <- data.frame(id = cluster_frame1$id, linclust_predictions_sys = lin1_predictions_sys) 
+b <- data.frame(id = cluster_frame2$id, linclust_predictions_sys = lin2_predictions_sys) 
+c <- data.frame(id = cluster_frame3$id, linclust_predictions_sys = lin3_predictions_sys) 
+d <- data.frame(id = cluster_frame4$id, linclust_predictions_sys = lin4_predictions_sys) 
+linclust_sys <- do.call("rbind", list(a,b,c,d))
+### MSE data frame 
+mse <- merge(mse,linclust_sys, by = "id")
+
+mse$sys_lincluster_mse <- (mse$true_sys - mse$linclust_predictions_sys)^2
+
+
+```
+
+```{r}
+
+for(i in 1:4)
+{
+  cluster_train <- cluster_final %>% filter(cluster == i)
+  cluster_train <- subset(cluster_train, select=-c(sys_mean,id,cluster,mult))
+
+  #### using information criteria:
+  cluster_lin_dia = lm(dia_mean~I(ridageyr^2)+., cluster_train)
+  assign(paste0("cluster_lin_dia",i),cluster_lin_dia)
+
+}
+
+#### prediction for cluster 1
+cluster_frame1 <- lin_frame_test %>% filter(cluster == 1) 
+lin1_predictions_dia = predict(cluster_lin_dia1, newdata = cluster_frame1)
+summary(lin1_predictions_dia)
+
+
+#### prediction for cluster 2
+cluster_frame2 <- lin_frame_test %>% filter(cluster == 2)
+lin2_predictions_dia = predict(cluster_lin_dia2, newdata = cluster_frame2)
+summary(lin2_predictions_dia)
+
+#### prediction for cluster 3
+cluster_frame3 <- lin_frame_test %>% filter(cluster == 3)
+lin3_predictions_dia = predict(cluster_lin_dia3, newdata = cluster_frame3)
+summary(lin3_predictions_dia)
+
+#### prediction for cluster 4
+cluster_frame4 <- lin_frame_test %>% filter(cluster == 4)
+lin4_predictions_dia = predict(cluster_lin_dia4, newdata = cluster_frame4)
+summary(lin4_predictions_dia)
+
+#### one vector of mse 
+a <- data.frame(id = cluster_frame1$id, linclust_predictions_dia = lin1_predictions_dia) 
+b <- data.frame(id = cluster_frame2$id, linclust_predictions_dia = lin2_predictions_dia) 
+c <- data.frame(id = cluster_frame3$id, linclust_predictions_dia = lin3_predictions_dia) 
+d <- data.frame(id = cluster_frame4$id, linclust_predictions_dia = lin4_predictions_dia) 
+linclust_dia <- do.call("rbind", list(a,b,c,d))
+### MSE data frame 
+mse <- merge(mse,linclust_dia, by = "id")
+
+mse$dia_lincluster_mse <- (mse$true_dia - mse$linclust_predictions_dia)^2
+
+
+```
+
+```{r}
+bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse,dia_lincluster_mse,sys_lincluster_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse),  linclust_sys_mse = mean(sys_lincluster_mse), linclust_dia_mse = mean(dia_lincluster_mse))
+bar_dia <- melt(bar_dia)
+
+
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
+   x="Blood Pressure", y="Mean Squared Error")
 ```
 

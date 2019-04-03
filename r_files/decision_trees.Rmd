@@ -72,7 +72,7 @@ mse$btree_dia_mse <- (mse$true_dia - mse$big_tree_predictions_dia)^2
 
 ```{r}
 
-train_sys <- subset(cluster_final, select=-c(dia_mean,mult,riagendr,diq010,mult,asian,black,white,hispanic,ridageyr,bpq040a, bpq020,id))
+train_sys <- subset(cluster_final, select=-c(dia_mean,id))
 
 for(i in 1:4)
 {
@@ -81,7 +81,7 @@ for(i in 1:4)
   #### using information criteria:
   trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
   tree_information = train(sys_mean~., 
-                                data = cluster_train_sys[,c(-14)], method = "rpart", 
+                                data = cluster_train_sys[,c(-24)], method = "rpart", 
                                 parms = list(split = "information"), 
                                 trControl=trctrl, tuneLength = 10)
   assign(paste0("cluster_tree_sys",i),tree_information)
@@ -163,7 +163,7 @@ mse$sys_tree_mse <- (mse$true_sys - mse$tree_predictions_sys)^2
 
 ```{r}
 
-train_dia <- subset(cluster_final, select=-c(sys_mean,mult,riagendr,diq010,mult,asian,black,white,hispanic,ridageyr,bpq040a, bpq020,id))
+train_dia <- subset(cluster_final, select=-c(sys_mean, id))
 
 for(i in 1:4)
 {
@@ -171,7 +171,7 @@ for(i in 1:4)
   #### using information criteria:
   trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
   tree_information = train(dia_mean~., 
-                                data = cluster_train_dia[,c(-14)], method = "rpart", 
+                                data = cluster_train_dia[,c(-24)], method = "rpart", 
                                 parms = list(split = "information"), 
                                 trControl=trctrl, tuneLength = 10)
   
