@@ -79,6 +79,6 @@ bar_dia <- melt(bar_dia)
 
 ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
 geom_bar(stat="summary") + theme_minimal() + labs(title="Comparing Model Performance in Predicting Blood Pressure by Mahalanobis Distance", 
-   x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5))
+   x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) 
 ```
 
