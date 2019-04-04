@@ -82,3 +82,19 @@ geom_bar(stat="summary") + theme_minimal() + labs(title="Comparing Model Perform
    x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) 
 ```
 
+
+
+```{r}
+bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse,sys_las_mse, dia_las_mse, rf_pred_sys,rf_pred_dia) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse), sys_lass_mse = mean(sys_las_mse), dia_las_mse = mean(dia_las_mse), rf_pred_sys = mean(rf_pred_sys), rf_pred_dia = mean(rf_pred_dia))
+bar_dia <- melt(bar_dia)
+
+
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
+   x="Blood Pressure", y="Mean Squared Error")
+```
+
+```{r}
+ #write.csv(dataset, "filename.csv")
+```
+

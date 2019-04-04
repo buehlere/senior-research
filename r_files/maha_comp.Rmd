@@ -1,0 +1,26 @@
+---
+title: "mahalanobis_comp"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+```
+
+
+```{r}
+####vastly the same predictions or bad clusters, probabilities to cluster
+hist(mse$rf_mal)
+summary(mse$rf_mal)
+##outlier <- mse %>% select(rf_mal) %>% filter(rf_mal < quantile(rf_mal, 0.95))
+outlier <- mse$rf_mal
+hist(outlier)
+qqPlot(outlier)
+```
+
