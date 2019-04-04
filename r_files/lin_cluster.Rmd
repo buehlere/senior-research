@@ -111,6 +111,10 @@ mse <- merge(mse,linclust_dia, by = "id")
 
 mse$dia_lincluster_mse <- (mse$true_dia - mse$linclust_predictions_dia)^2
 
+### malahonbis distance 
+mal_pred <- cbind(mse$linclust_predictions_dia,mse$linclust_predictions_sys)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$linclust_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 ```
 

@@ -1,10 +1,84 @@
 ---
 title: "random_forest"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+library(rpart.plot)
+library(clustMixType)
+
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
 
+
+```{r}
+sys_tree <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(1:10))
+rf_sys_tree = train(sys_mean~., 
+                               data = sys_tree, method = "rf", 
+                               parms = list(split = "information"), 
+                               trControl=trctrl,ntrees = 100,tuneGrid = tunegrid)
+plot(rf_sys_tree)
+rf_sys_tree$results
+
+### prediction 
+rf_sys_pred <- predict(rf_sys_tree, newdata = lin_frame_test)
+
+### MSE data frame 
+mse$rf_pred_sys <- rf_sys_pred
+
+mse$rf_sys_mse <- (mse$true_sys - mse$rf_pred_sys)^2
+
+
+
+
+```
+
+
+```{r}
+dia_tree <- subset(lin_frame_clean, select=-c(sys_mean,ridreth3,mult))
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+tunegrid = expand.grid(mtry=c(1:10))
+rf_dia_tree = train(dia_mean~., 
+                               data = dia_tree, method = "rf", 
+                               parms = list(split = "information"), 
+                               trControl=trctrl,ntrees = 100,tuneGrid = tunegrid)
+plot(rf_dia_tree)
+rf_dia_tree$results
+
+
+### prediction 
+rf_dia_pred <- predict(rf_dia_tree, newdata = lin_frame_test)
+
+### MSE data frame 
+mse$rf_pred_dia <- rf_dia_pred
+
+mse$rf_dia_mse <- (mse$true_dia - mse$rf_pred_dia)^2
+
+### malahonbis distance 
+mal_pred <- cbind(mse$rf_pred_dia,mse$rf_pred_sys)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$rf_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
+```
+
+
+```{r}
+bar_dia <- mse %>% select(lin_mal, linclust_mal, btree_mal, treeclust_mal, las_mal, rf_mal) %>% summarise(linear = mean(lin_mal), cluster_linear = mean(linclust_mal), dtree = mean(btree_mal), cluster_dtree = mean(treeclust_mal), lasso = mean(las_mal), rforest = mean(rf_mal))
+bar_dia <- melt(bar_dia)
+
+
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary") + theme_minimal() + labs(title="Comparing Model Performance in Predicting Blood Pressure by Mahalanobis Distance", 
+   x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5))
+```
 

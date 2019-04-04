@@ -126,6 +126,11 @@ summary(lasso_pred)
 
 mse$dia_las_mse <- (lin_frame_test$dia_mean - lasso_pred)^2
 mse$dia_las  <- lasso_pred
+
+### malahonbis distance 
+mal_pred <- cbind(mse$dia_las,mse$sys_las)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$las_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 #-----------------------------------------------------------
 ```
 

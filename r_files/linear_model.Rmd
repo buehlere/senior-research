@@ -197,7 +197,9 @@ summary(lin_frame_test$dia_mean)
 #### MSE Frame update
 mse$dia_lin_mse <- (lin_frame_test$dia_mean - dia_predictions)^2
 mse$dia_lin  <- dia_predictions
-
+mal_pred <- cbind(mse$dia_lin,mse$sys_lin)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$lin_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 
 ```

@@ -67,6 +67,11 @@ dia_predictions = predict(big_tree_dia, newdata = lin_frame_test)
 mse$big_tree_predictions_dia <- dia_predictions
 mse$btree_dia_mse <- (mse$true_dia - mse$big_tree_predictions_dia)^2
 
+### malahonbis distance 
+mal_pred <- cbind(mse$big_tree_predictions_dia,mse$big_tree_predictions_sys)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$btree_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
+
 ```
 
 
@@ -231,6 +236,12 @@ tree_predictions_dia <- do.call("rbind", list(a,b,c,d))
 mse <- merge(mse,tree_predictions_dia, by = "id")
 
 mse$dia_tree_mse <- (mse$true_dia - mse$tree_predictions_dia)^2
+
+
+### malahonbis distance 
+mal_pred <- cbind(mse$tree_predictions_dia,mse$tree_predictions_sys)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$treeclust_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 ```
 
