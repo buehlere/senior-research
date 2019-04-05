@@ -15,12 +15,26 @@ library(ggfortify)
 
 
 ```{r}
-####vastly the same predictions or bad clusters, probabilities to cluster
+#### looking at distances 
 hist(mse$rf_mal)
 summary(mse$rf_mal)
-##outlier <- mse %>% select(rf_mal) %>% filter(rf_mal < quantile(rf_mal, 0.95))
+
+
+#### finding outlier cut-off  
 outlier <- mse$rf_mal
 hist(outlier)
-qqPlot(outlier)
+
+#### finding cut-offs 
+threshold <- sqrt(qchisq(p = 0.95, df = 2))
+which(outlier < threshold)
+
+#### visualizing cutoff 
+qqplot(qchisq(ppoints(100), df = 2), outlier,
+       main = expression("Q-Q plot of Mahalanobis" * ~outlier^2 *
+                         " vs. quantiles of" * ~ chi[2]^2))
+
+
+#### NOTES FROM MEETING TODAY: 
+#### vastly the same predictions or bad clusters, probabilities to cluster
 ```
 
