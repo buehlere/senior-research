@@ -132,6 +132,15 @@ cluster_test$bpq020 <- as.factor(cluster_test$bpq020)
 cluster_prediction <- predict(kproto_fit,cluster_test)
 lin_frame_test$cluster <- cluster_prediction$cluster 
 
+#### CLUSTER ANALYSIS 
+head(cluster_prediction$dists)
+summary(kproto_fit,cluster_test)
+clprofiles(kproto_fit,cluster_expl)
+cluster_expl <- cluster_frame
+cluster_expl$dia <- lin_frame_clean$dia_mean
+cluster_expl$sys <- lin_frame_clean$sys_mean
+
+
 #### prediction for cluster 1
 cluster_frame1 <- lin_frame_test %>% filter(cluster == 1) 
 tree1_predictions_sys = predict(cluster_tree_sys1, newdata = cluster_frame1)
