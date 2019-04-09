@@ -40,7 +40,7 @@ mse$rf_pred_sys <- rf_sys_pred
 mse$rf_sys_mse <- (mse$true_sys - mse$rf_pred_sys)^2
 
 
-
+write.csv(sys_tree,"sys_tree.csv")
 
 ```
 
@@ -52,10 +52,15 @@ tunegrid = expand.grid(mtry=c(1:10))
 rf_dia_tree = train(dia_mean~., 
                                data = dia_tree, method = "rf", 
                                parms = list(split = "information"), 
-                               trControl=trctrl,ntrees = 100,tuneGrid = tunegrid)
+                               trControl=trctrl,ntrees = 100,tuneGrid = tunegrid,importance = TRUE)
 plot(rf_dia_tree)
 rf_dia_tree$results
 
+write.csv(dia_tree,"dia_tree.csv")
+write.csv(mse,"mse.csv")
+write.csv(lin_frame_test,"test.csv")
+#Evaluate variable importance
+varImp(rf_dia_tree, scale = FALSE)
 
 ### prediction 
 rf_dia_pred <- predict(rf_dia_tree, newdata = lin_frame_test)
@@ -79,7 +84,7 @@ bar_dia <- melt(bar_dia)
 
 ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
 geom_bar(stat="summary") + theme_minimal() + labs(title="Comparing Model Performance in Predicting Blood Pressure by Mahalanobis Distance", 
-   x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) 
+   x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) + scale_colour_grey() + theme_bw()
 ```
 
 

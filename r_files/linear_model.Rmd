@@ -94,6 +94,9 @@ summary(bpsys_linear1)
 bpsys_linear2 = lm(sys_mean~ bmxarmc + bmxsad1 + bmxht + bmxwaist + bmxwt + riagendr + ridageyr + I(ridageyr^2) + hispanic + white + black + diq010 + lbdldl + log(lbxtc) + log(lbxglu) + bpq020 + bpq040a + bmxarmc:ridageyr + riagendr:lbdldl + riagendr:lbxglu + bmxsad1:diq010 + riagendr:ridageyr + bmxsad1:bpq040a  + ridageyr:white + ridageyr:diq010 + ridageyr:lbdldl  , sys_lin)
 summary(bpsys_linear2)
 
+table1 <- export_summs(bpdia_linear2, scale = TRUE)
+write.csv(table1, "model1.csv")
+
 ####keep in original for interaction and transformation 
   #### residual assumption 
   #### overal residual values 
@@ -178,6 +181,8 @@ summary(bpdia_linear1)
 bpdia_linear2 = lm(dia_mean~ bmxarmc + bmxsad1 + log(bmxwt) + riagendr + ridageyr + I(ridageyr^2) + white + black + asian + diq010 + log(lbdldl) + lbxtc + bpq020 + bpq040a + ridageyr:white +  bmxsad1:ridageyr + ridageyr:bpq040a + riagendr:lbdldl,dia_lin)
 summary(bpdia_linear2)
 
+table1 <- export_summs(bpdia_linear2, scale = TRUE)
+write.csv(table1, "model2.csv")
   #### residual assumption 
   #### overal residual values 
   plot(bpdia_linear2$fitted.values,bpdia_linear2$residuals)
@@ -255,12 +260,12 @@ mse$lin_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 ### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
 ### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
 ### Histogram of differences 
-ggplot(mse, aes(predicted_dia,true_dia))+
-    geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm")  + labs(title="True Diastolic Blood Pressure compared to \nPredicted Diastolic Blood Pressure", 
-   x="Predicted Diastolic", y="True Diastolic")
+ggplot(mse, aes(dia_lin,true_dia))+
+    geom_point() + geom_abline(aes(intercept=0, slope=1, col = "red")) + geom_smooth(method="lm")  + labs( 
+   x="Predicted Diastolic", y="True Diastolic") + theme_minimal()
 
-ggplot(mse, aes(predicted_sys,true_sys))+
-    geom_point() + geom_abline(aes(intercept=0, slope=1)) + geom_smooth(method="lm") + labs(title="True Systolic Blood Pressure compared to \nPredicted Systolic Blood Pressure", 
-   x="Predicted Systolic", y="True Systolic")
+ggplot(mse, aes(sys_lin,true_sys))+
+    geom_point() + geom_abline(aes(intercept=0, slope=1, col = "red")) + geom_smooth(method="lm") + labs( 
+   x="Predicted Systolic", y="True Systolic") + theme_minimal()
 ```
 
