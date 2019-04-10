@@ -24,15 +24,14 @@ knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/
 #### regular decision tree 
 #### systolic 
 sys_tree <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
-
-
+tunegrid = expand.grid(cp=seq(0,0.1,0.01))
 #### using information criteria:
 trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
-big_tree_sys = train(sys_mean~., 
+big_tree_sys_try = train(sys_mean~., 
                                 data = sys_tree, method = "rpart", 
                                 parms = list(split = "information"), 
-                                trControl=trctrl, tuneLength = 10)
-
+                                trControl=trctrl, tuneLength = 10, tuneGrid=tunegrid)
+plot(big_tree_sys_try)
 prp(big_tree_sys$finalModel, 
     box.palette = "Blues", 
     tweak = 1.2)
