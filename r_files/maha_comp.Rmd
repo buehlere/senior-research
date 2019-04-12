@@ -21,19 +21,32 @@ summary(mse$rf_mal)
 
 
 #### finding outlier cut-off  
-outlier <- mse$rf_mal
+outlier <- data.frame(sys = mse_try$rf_pred_sys, dia = mse_try$rf_pred_dia)
+mahalanobis(outlier$sys,outlier$dia,cov(outlier$sys,outlier$dia))
+outlier
 hist(outlier)
+
 
 #### finding cut-offs 
 threshold <- sqrt(qchisq(p = 0.95, df = 2))
-which(outlier < threshold)
+threshold
+which(outlier > threshold)
 
 #### visualizing cutoff 
-qqplot(qchisq(ppoints(100), df = 2), outlier,
+qqplot(qchisq(ppoints(1204), df = 2), mse_try$rf_mal,
        main = expression("Q-Q plot of Mahalanobis" * ~outlier^2 *
-                         " vs. quantiles of" * ~ chi[2]^2))
+                         " vs. quantiles of" * ~ chi[2]^2),xlab = "Chi-Square",ylab = "Mahalanobis")
 
+# set cutoff using chi square distribution
+threshold <- sqrt(qchisq(ppoints(1204), df = 2,lower.tail = FALSE)) # df = no of columns
 
+# find outliers
+mse_try$rf_mal[which(mse_try$rf_mal < threshold)] # gives the row numbers of outliers
+outlier <- mse_try$rf_mal
+outlier <- as.data.frame(outlier)
+outlier$color <- as.factor(ifelse(mse_try$rf_mal >= 93 ,"over","under"))
+quantile(outlier, 0.95)
+outlier %>% ggplot(aes(sqrt(outlier), fill=color)) + geom_histogram() + theme_minimal() +labs(x = "Distance Between True and Predicted Blood Pressure") + guides(fill=guide_legend(title="95 Percentile"))
 #### NOTES FROM MEETING TODAY: 
 #### vastly the same predictions or bad clusters, probabilities to cluster
 ```

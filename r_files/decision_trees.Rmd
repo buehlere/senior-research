@@ -256,7 +256,10 @@ mse$treeclust_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 ```{r}
 #### comparison to linear 
-bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse))
+bar_dia <- mse_try %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse))
+bar_dia <- melt(bar_dia)
+
+bar_sys <- mse_try %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse))
 bar_dia <- melt(bar_dia)
 
 

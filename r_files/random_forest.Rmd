@@ -14,7 +14,7 @@ library(readr)
 library(Hmisc)
 library(ggfortify)
 library(rpart.plot)
-library(clustMixType)
+library(reshape2)
 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
@@ -78,28 +78,41 @@ mse$rf_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 
 ```{r}
-bar_dia <- mse %>% select(lin_mal, linclust_mal, btree_mal, treeclust_mal, las_mal, rf_mal) %>% summarise(linear = mean(lin_mal), cluster_linear = mean(linclust_mal), dtree = mean(btree_mal), cluster_dtree = mean(treeclust_mal), lasso = mean(las_mal), rforest = mean(rf_mal))
+bar_dia <- mse_try %>% select(lin_mal, linclust_mal, btree_mal, rf_mal) %>% summarise(linear = sqrt(mean(lin_mal)), cluster_linear = sqrt(mean(linclust_mal)), dtree = sqrt(mean(btree_mal)), rforest = sqrt(mean(rf_mal)))
 bar_dia <- melt(bar_dia)
 
 
 ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-geom_bar(stat="summary") + theme_minimal() + labs(title="Comparing Model Performance in Predicting Blood Pressure by Mahalanobis Distance", 
-   x="Model Type", y="Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) + scale_colour_grey() + theme_bw()
+geom_bar(stat="summary") + theme_minimal() + labs(x="Model Type", y="Root Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) +  theme(axis.text.x = element_text(angle = 60, hjust = 1),legend.position="none") + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest")) 
 ```
 
 
 
 ```{r}
-bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse,sys_las_mse, dia_las_mse, rf_pred_sys,rf_pred_dia) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse), sys_lass_mse = mean(sys_las_mse), dia_las_mse = mean(dia_las_mse), rf_pred_sys = mean(rf_pred_sys), rf_pred_dia = mean(rf_pred_dia))
+bar_dia <- mse_try %>% select(sys_lin_mse, sys_lincluster_mse, btree_sys_mse, rf_sys_mse ) %>% summarise(lin_sys_mse = sqrt(mean(sys_lin_mse)), linclust_sys_mse = sqrt(mean(sys_lincluster_mse)), btree_sys_mse = sqrt(mean(btree_sys_mse)), rf_sys_mse = sqrt(mean(rf_sys_mse)))
 bar_dia <- melt(bar_dia)
 
-
+#+ scale_fill_brewer(palette="OrRd")
 ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-geom_bar(stat="summary") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
-   x="Blood Pressure", y="Mean Squared Error")
+geom_bar(stat="summary")  + labs( 
+   x="Blood Pressure", y="Root Mean Squared Error") + theme_minimal() + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5),legend.position="none") + scale_colour_grey() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest"))
 ```
 
 ```{r}
- #write.csv(dataset, "filename.csv")
+bar_dia <- mse_try %>% select(dia_lin_mse, dia_lincluster_mse, btree_dia_mse, rf_dia_mse ) %>% summarise(lin_dia_mse = sqrt(mean(dia_lin_mse)), linclust_dia_mse = sqrt(mean(dia_lincluster_mse)), btree_dia_mse = sqrt(mean(btree_dia_mse)), rf_dia_mse = sqrt(mean(rf_dia_mse))) 
+bar_dia <- melt(bar_dia)
+
+#+ scale_fill_brewer(palette="OrRd")
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary")  + labs( 
+   x="Blood Pressure", y="Root Mean Squared Error") + theme_minimal() + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5),legend.position="none") + scale_colour_grey() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest"))
+```
+
+```{r}
+dia_imp <- dia_imp[order(dia_imp$Overall,decreasing = TRUE),]
+ggplot(dia_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Black","Hispanic","White","HDL Chol.","Glucose","Diabetes","Gender","Hypertension Med.", "Asian","Leg Circum.","Lower Arm Circum.", "Hypertension","LDL Chol.","Height","Abdomin Circum.","Upper Arm Circum.","Cholesterol","BMI","Weight","Waist Circum.","Age")) + labs( 
+   x="Predictor", y="Importance to Diastolic Pressure")
+
+ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) + labs(x="Predictor", y="Importance to Systolic")
 ```
 
