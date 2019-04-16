@@ -294,6 +294,8 @@ vara$ridageyr[vara$ridageyr>=40 & vara$ridageyr<=49] <- 4
 vara$ridageyr[vara$ridageyr>=30 & vara$ridageyr<=39] <- 3
 vara$ridageyr[vara$ridageyr>=20 & vara$ridageyr<=29] <- 2
 vara$ridageyr[vara$ridageyr>=10 & vara$ridageyr<=19] <- 1
-ggplot(vara, aes(x=as.factor(ridageyr),y=sys_mean)) + geom_boxplot()
+ggplot(vara, aes(x=as.factor(ridageyr),y=sys_mean)) + geom_boxplot() + theme_minimal() + labs(x = "age in decades",y= "Systolic Mean") 
+
+ggplot(vara, aes(x=as.factor(ridageyr),y=dia_mean)) + geom_boxplot() + theme_minimal() + labs(x = "age in decades",y= "Diastolict Mean") 
 ```
 
