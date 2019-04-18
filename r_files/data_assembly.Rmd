@@ -1,26 +1,32 @@
 ---
-title: "Untitled"
+title: "Data Assembly"
 output: html_document
 editor_options: 
-  chunk_output_type: inline
+chunk_output_type: inline
 ---
+PRIMARY PURPOSE: 
+The purpose of this .Rmd is to assemble the data specific to this research into a training and test set that can be used with minial adjustment and cleaning for the analysis of this study. The pre-processed data for this study was downloaded from the NHANES website (https://wwwn.cdc.gov/nchs/nhanes/NhanesCitation.aspx), and are required to run this file. However, these files should be provided with a copy of the .Rmd. It is important to note that this file will only run if output is set to in-line. Additionally, the file directory should be changed to match the location of the necessary NHANES data. 
+
 
 ```{r setup, include=FALSE}
+#### Attaching appropriate packages 
 knitr::opts_chunk$set(echo = TRUE)
-library(caret) 
-library(ggplot2)
-library(dplyr)
-library(readr)
-library(Hmisc)
-library(ggfortify)
-#### Setting working directory 
+library(ggplot2) ###plotting 
+library(dplyr) ### data manipulation 
+library(readr) ### file reading 
+library(Hmisc) ### additional features 
+#### Setting working directory. CHANGE TO MATCH LOCATION OF NECESSARY NHANES DATA 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
 
 
 
 ```{r}
-#reading in all .XPT SAS files from NHANES_DATA folder 
+#___________________________________________________________________________________________________
+#### READING DATA FROM FOLDER 
+#### reading in all .XPT SAS files from NHANES_DATA folder and labeling them accordingly. Each of these files contains variables relevant to this study and come from various portions of the NHANES survey. 
+#___________________________________________________________________________________________________
+
 nhanes_file_names <- list.files(path = "NHANES_DATA")
 for(i in 1:length(nhanes_file_names))
 {
@@ -29,6 +35,14 @@ for(i in 1:length(nhanes_file_names))
 ```
 
 ```{r}
+#___________________________________________________________________________________________________
+#### CONSOLIDATING COHORT YEARS FOR EACH DATA FRAME 
+#### The data frames containing relevant variables are split up by their respective cohort year, so they need to be horizontally merged. This code works as NHANES variables are consists between years with the exception of the cholesterol data. The necessary adjustments have been made below. 
+
+#### This code should be generalizable, but for some reason wouldn't work. I posted about this issue on Stack OVerflow (https://stackoverflow.com/questions/55151729/having-trouble-generalizing-a-data-cleaning-solution-to-a-function-in-r). 
+#___________________________________________________________________________________________________
+
+
 years <- c("_1999.XPT","_2003.XPT","_2005.XPT","_2007.XPT","_2009.XPT","_2011.XPT","_2013.XPT","_2015.XPT")
 
 ####Blood Pressure 
@@ -76,20 +90,6 @@ for(i in 2:length(years))
 }
 
 
-####heart_health 
-heart_health <- heart_health_1999.XPT
-for(i in 2:length(years))
-{
-  heart_health <- bind_rows(heart_health,get(paste0("heart_health",years[i])))    
-}
-
-
-####kidney_health 
-kidney_health <- kidney_health_1999.XPT
-for(i in 2:length(years))
-{
-  kidney_health <- bind_rows(kidney_health,get(paste0("kidney_health",years[i])))    
-}
 
 ####diabetes 
 diabetes <- diabetes_1999.XPT
@@ -106,14 +106,9 @@ for(i in 2:length(years))
   hypertension <- bind_rows(hypertension,get(paste0("hypertension",years[i])))    
 }
 
-####smoking
-smoking <- smoking_1999.XPT
-for(i in 2:length(years))
-{
-  smoking <- bind_rows(smoking,get(paste0("smoking",years[i])))    
-}
 
 ####total and good cholesterol 
+#### Making adjustment for cholesterol 
 cholesterol <- merge(get(paste0("cholesterol",years[3])),get(paste0("good_cholesterol",years[3])))
 for(i in 4:length(years))
 {
@@ -128,8 +123,12 @@ cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2003.XPT)
 ```
 
 ```{r}
-#### extracting likely variables 
+#___________________________________________________________________________________________________
+#### EXTRACTING IMPORTANT VARIABLES FROM DATA FRAMES AND CREATING TRAINING AND TEST 
+#### Not all of the variables from the dataframes are required for the study and thus are filtered out below. Then, the variables are combined into a training and test set. Additionally, OUTLIERS FOR BLOOD PRESSURE are removed here.  
+#___________________________________________________________________________________________________
 
+#___________________________________________________________________________________________________
 #### DV: Blood Pressure 
   ### selecting blood relevant blood pressures 
   dv_bp <- bloodpressure %>% select(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)
@@ -141,7 +140,9 @@ cholesterol <- bind_rows(cholesterol, total_good_cholesterol_2003.XPT)
   #### calculating mean 
   dv_bp$dia_mean <- rowMeans(dv_bp[,c("bpxdi1","bpxdi2","bpxdi3")])
   dv_bp$sys_mean <- rowMeans(dv_bp[,c("bpxsy1","bpxsy2","bpxsy3")])
-
+#___________________________________________________________________________________________________
+  
+#___________________________________________________________________________________________________
 #### IV: BMI Info 
 bmi_variables <- body_measure %>% select(seqn,bmxarmc, bmxarml, bmxleg, bmxrecum, bmxsad1, bmxht, bmxwaist, bmxwt, bmxbmi)
 
@@ -168,16 +169,7 @@ dia_variables$diq010[dia_variables$diq010 == 2] <- 0
 chol_variables <- cholesterol %>% select(seqn,lbdhdd,lbxtc)
 bad_chol_variables <- bad_cholesterol %>% select(seqn,lbdldl)
 
-#### IV: Smoking 
-  #### only yes and nos 
-  #smoking_variables <- smoking %>% select(seqn,smq020,smq040)
-  #smoking_variables <- smoking_variables %>% filter(smq020 == 1 | smq020 == 2)
-  
-  #### nas are nos for smoking 
-  #smoking_variables$smq040[is.na(smoking_variables$smq040)] <- 0
-  
-  #### dumming out smoking 
-  #smoking_variables$smq040 <- ifelse(smoking_variables$smq040 == 0, 0, ifelse(smoking_variables$smq040 == 1, 1, ifelse(smoking_variables$smq040 == 2, 1, ifelse(smoking_variables$smq040 == 3,0, ifelse(smoking_variables$smq040 == 7,NA,NA)))))
+
 
 #### IV: Hypertension Medication
 hypertension_variables <- hypertension %>% select(seqn,bpq020,bpq040a)
@@ -193,29 +185,37 @@ hypertension_variables <- hypertension %>% select(seqn,bpq020,bpq040a)
 
 ####IV: glucose 
 glu_variables <- glucose %>% select(seqn,lbxglu)
+#___________________________________________________________________________________________________
+#___________________________________________________________________________________________________
 
-####merge 
+#### merging into single grame 
 lin_frame <- dv_bp 
 variables <- c("bmi_variables","demo_variables","dia_variables","bad_chol_variables","chol_variables","glu_variables","hypertension_variables")
 for(i in 1:length(variables))
 {
   lin_frame <- merge(lin_frame,eval(as.name(variables[i])),by=c("seqn"))
 }
-summary(lin_frame)
+summary(lin_frame) #### summary to check everything looks reasonable 
 
-## 75% of the sample size
+#### 75% of the sample size
 smp_size <- floor(0.75 * nrow(lin_frame))
 
-## set the seed to make your partition reproducible
-#set.seed(123)
+#### set the seed to make your partition reproducible
+set.seed(123)
 train_ind <- sample(seq_len(nrow(lin_frame)), size = smp_size)
 
+#### Create training and test set 
 lin_frame <- lin_frame[train_ind, ]
 lin_frame_test <- lin_frame[-train_ind, ]
 
 ```
 
 ```{r}
+#___________________________________________________________________________________________________
+#### MISC CLEANING 
+#### remove misc. variables and drop NAs 
+#___________________________________________________________________________________________________
+
 #### test frame 
 lin_frame_test$bmxrecum <- NULL 
 lin_frame_test <- subset(lin_frame_test, select=-c(seqn,bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3)) 

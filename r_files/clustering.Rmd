@@ -1,25 +1,31 @@
 ---
-title: "clustering"
+title: "Clustering"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+chunk_output_type: inline
 ---
+PRIMARY PURPOSE: 
+The purpose of this .Rmd is to cluster data based on demographic variables. All variables are treated as categorical with the exception of age which is treated as continuous. Since the types of variables are mixed, kprototype clustering is used from the clustMixType library. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(caret) 
 library(ggplot2)
 library(dplyr)
 library(readr)
 library(Hmisc)
-library(ggfortify)
-library(rpart.plot)
-library(clustMixType)
+library(ggfortify) ##plots
+library(rpart.plot) ##plots 
+library(clustMixType) ##clustering 
 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
 
 ```{r}
+#___________________________________________________________________________________________________
+#### CLEANING DATA FOR CLUSTERING 
+#### checking that the types are right
+#___________________________________________________________________________________________________
+
 # cluster Frame 
 cluster_frame <- subset(lin_frame_clean, select=c(riagendr,diq010,ridreth3,ridageyr,bpq040a, bpq020))
 cluster_frame$riagendr <- as.factor(cluster_frame$riagendr)
@@ -28,32 +34,15 @@ cluster_frame$diq010 <- as.factor(cluster_frame$diq010)
 cluster_frame$bpq040a <- as.factor(cluster_frame$bpq040a)
 cluster_frame$bpq020 <- as.factor(cluster_frame$bpq020)
 
-#### Turning Blood Pressure into Categorical Data
-
-#### Systolic
-#cluster_frame$bp_cat <- ifelse(cluster_frame$sys_mean < 120 & cluster_frame$dia_mean < 80, 1 , ifelse(cluster_frame$sys_mean > 120 & cluster_frame$sys_mean < 129 & cluster_frame$dia_mean < 80, 2, ifelse(cluster_frame$sys_mean > 130 & cluster_frame$sys_mean < 139 | cluster_frame$dia_mean > 80 & cluster_frame$dia_mean < 89, 3, ifelse(cluster_frame$sys_mean >= 140 | cluster_frame$dia_mean >= 90, 4,0))))
-
-#summary(cluster_frame$bp_cat)
-#cluster_frame$sys_mean <- NULL 
-#cluster_frame$dia_mean <- NULL 
-
-#### Turning Age into categorical Data
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=90 & cluster_frame$ridageyr<=99] <- 9
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=80 & cluster_frame$ridageyr<=89] <- 8
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=70 & cluster_frame$ridageyr<=79] <- 7
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=60 & cluster_frame$ridageyr<=69] <- 6
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=50 & cluster_frame$ridageyr<=59] <- 5
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=40 & cluster_frame$ridageyr<=49] <- 4
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=30 & cluster_frame$ridageyr<=39] <- 3
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=20 & cluster_frame$ridageyr<=29] <- 2
-#cluster_frame$ridageyr[cluster_frame$ridageyr>=10 & cluster_frame$ridageyr<=19] <- 1
-#summary(cluster_frame$ridageyr)
-
 ```
 
 ```{r}
-#### Looking at best number of Clusters:
+#___________________________________________________________________________________________________
+#### LOOKING AT THE BEST NUMBER OF CLUSTERS 
 #### calculate within-cluster distances as a function of cluster size. This will help determine best number of clusters
+#___________________________________________________________________________________________________
+
+### calculating within-cluster distances 
 wss = list(15)
 for (k in 2:15){ 
   wss[k] = kproto(cluster_frame, k, iter.max = 100,nstart = 3)$tot.withinss
@@ -62,21 +51,34 @@ for (k in 2:15){
 ### plot results 
 plot(2:15, wss[2:15], type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares")
+### based on the screeplot, 4 clusters seems best 
 ```
 
 
 ```{r}
+#___________________________________________________________________________________________________
+#### EXAMINING CLUSTERS 
+#___________________________________________________________________________________________________
 #### creating clusters and labeling 
 kproto_fit = kproto(cluster_frame, 4,iter.max = 100,nstart = 3)
+
+#### EXAMING INFO ABOUT CLUSTERS 
 kproto_fit$size
 kproto_fit$centers
 
+#### REALLY COOL VISUALS TO SEE HOW CLUSTERS VARY ACROSS VARIABLES 
+summary(kproto_fit)
+clprofiles(kproto_fit,lin_frame_clean)
+
 ```
 
 
 
 ```{r}
-
+#___________________________________________________________________________________________________
+#### PLOTTING CLUSTERS AND CREATING A DATA FRAME THAT CAN BE USED TO MODEL CLUSTERS 
+#### clusters are shown on the principal componants of the data as well as the systolic and diastolic blood pressure. Additionally, a dataframe is made that can be used to train models on the different clusters. 
+#___________________________________________________________________________________________________
 #### principal componant for visual 
 pc_frame <- subset(lin_frame_clean, select=-c(ridreth3))
 
@@ -84,16 +86,25 @@ principal_comp <- prcomp(pc_frame,scale.=TRUE)
 round(principal_comp$rotation[,1:2],2) 
 
 
-#### plotting visual 
-#### making cluster frame
+
+#### making cluster frame, this will come in useful for 
 cluster_final <- pc_frame
 cluster_final$cluster <- as.factor(kproto_fit$cluster)
 
+#### plotting visual 
+#### Principal Componants 
 autoplot(principal_comp, data = cluster_final, colour = 'cluster',loadings = TRUE, loadings.colour = 'blue',
          loadings.label = TRUE, loadings.label.size = 3)
 
+#### systolic and diastolic 
 ggplot(cluster_final, aes(x=sys_mean, y=dia_mean, color=cluster)) + geom_point()
+```
 
+```{r}
+#___________________________________________________________________________________________________
+#### ADDING AN INDEX 
+#### this index will be important later for cluster predictions 
+#___________________________________________________________________________________________________
 #### making a new id column 
 cluster_final$id <- seq.int(nrow(lin_frame_clean))
 ```
