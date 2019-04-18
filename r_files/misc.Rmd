@@ -8,11 +8,65 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-```{r}
 out <- mvrnorm(1000, mu = c(0,0), Sigma = matrix(c(1,0.56,0.56,1), ncol = 2),
                empirical = TRUE)
 out <- as.data.frame(out)
 out %>% ggplot(aes(V1,V2)) + geom_point() + geom_point(x = 0, y = 0, color="red",size = 7) + geom_point() + geom_point(x = -1, y = 1, color="yellow",size = 5, shape = 15) + geom_point(x = 1, y = 1, color="blue",size = 5,shape = 17) + labs(x="Variable 1", y="Variable 2") + theme_minimal()
 ```
+
+
+```{r}
+### Density frame and plot for sys
+  ### Frame Creation 
+  density_sys <- mse %>% select(predicted_sys,true_sys,first_sys)
+  density_sys <- melt(density_sys)
+  
+  ### Plot 
+  ggplot(density_sys, aes(x=value, fill=variable)) +
+    geom_density(alpha=0.4)
+
+### MSE frame and plot for sys 
+  bar_sys <- mse %>% select(first_sys_mse, predict_sys_mse) %>% summarise(first_sys_mse = mean(first_sys_mse), predict_sys_mse = mean(predict_sys_mse))
+  bar_sys <- melt(bar_sys)
+  
+  ggplot(bar_sys, aes(x=variable, y=value, fill = variable)) +
+  geom_bar(stat="identity") + theme_minimal() 
+
+  
+  
+### NEED TO THROW OUT DIASTOLIC OBSERVATION 
+### CHECK FOR OUTLIERS AFTER CORRECTION 
+### SCATTER PLOT FIRST vs. TRUE 
+### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
+### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
+### Histogram of differences 
+
+
+
+ggplot(mse_try, aes(true_dia,rf_dia_pred))+
+    geom_point() + geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + geom_smooth(method="lm")  + labs( 
+   x="Predicted Diastolic", y="True Diastolic") + theme_minimal()
+summary(lm(true_dia~dia_lin,mse))
+
+ggplot(mse_try, aes(true_sys,rf_sys_pred))+
+    geom_point() + geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + geom_smooth(method="lm") + labs( 
+   x="Predicted Systolic", y="True Systolic") + theme_minimal() 
+
+summary(lm(true_sys~rf_sys_pred, mse_try))
+summary(lm(true_dia~rf_dia_pred, mse_try))
+vara <- lin_frame_clean
+vara$ridageyr[vara$ridageyr>=90 & vara$ridageyr<=99] <- 9
+vara$ridageyr[vara$ridageyr>=80 & vara$ridageyr<=89] <- 8
+vara$ridageyr[vara$ridageyr>=70 & vara$ridageyr<=79] <- 7
+vara$ridageyr[vara$ridageyr>=60 & vara$ridageyr<=69] <- 6
+vara$ridageyr[vara$ridageyr>=50 & vara$ridageyr<=59] <- 5
+vara$ridageyr[vara$ridageyr>=40 & vara$ridageyr<=49] <- 4
+vara$ridageyr[vara$ridageyr>=30 & vara$ridageyr<=39] <- 3
+vara$ridageyr[vara$ridageyr>=20 & vara$ridageyr<=29] <- 2
+vara$ridageyr[vara$ridageyr>=10 & vara$ridageyr<=19] <- 1
+ggplot(vara, aes(x=as.factor(ridageyr),y=sys_mean)) + geom_boxplot() + theme_minimal() + labs(x = "age in decades",y= "Systolic Mean") 
+
+ggplot(vara, aes(x=as.factor(ridageyr),y=dia_mean)) + geom_boxplot() + theme_minimal() + labs(x = "age in decades",y= "Diastolict Mean") 
 ```
+
 

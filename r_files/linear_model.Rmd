@@ -5,7 +5,7 @@ editor_options:
 chunk_output_type: console
 ---
 PRIMARY PURPOSE: 
-The purpose of this .Rmd is to build a linear model for both systolic and diastolic blood pressure to establish a reasonable baseline for the study. 
+The purpose of this .Rmd is to build a linear model for both systolic and diastolic blood pressure to establish a reasonable baseline for the study. The mse data frame created in this file is required in all subsquent modelling files and thus it is essential that this file is run before other modelling files. The mse data frame stores information about the performance of the various models in this study. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -14,21 +14,19 @@ library(dplyr)
 library(readr)
 library(matrixStats)
 library(reshape2)
-library(car)
+library(car) 
 library(MASS)
+library(jtools) ###exporting linear models 
 ```
 
 
 
-
-
-
 ```{r}
-lin_frame_clean %>% ggplot(aes(dia_mean,sys_mean)) + geom_point()
-```
+#___________________________________________________________________________________________________
+#### CONSTRUCTING LINEAR MODEL FOR SYSTOLIC BLOOD PRESSURE 
+#### An initial model is fit to the data in model 1. Assumptions are then amended and a better model is fit in model 2. Lastly, model 2's performance on the test set is recoreded in the mse data frame. The mse data frame will keep predicion information from models in subsquent files and thus is essential. 
+#___________________________________________________________________________________________________
 
-
-```{r}
 #### Systolic prediction 
 #### correlation
 sys_lin <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
@@ -90,12 +88,10 @@ summary(bpsys_linear1)
   crPlots(res_not)
   crPlots(res_correct)
 
-#### model 2: linear regression
+#### model 2: asumption amended linear regression
 bpsys_linear2 = lm(sys_mean~ bmxarmc + bmxsad1 + bmxht + bmxwaist + bmxwt + riagendr + ridageyr + I(ridageyr^2) + hispanic + white + black + diq010 + lbdldl + log(lbxtc) + log(lbxglu) + bpq020 + bpq040a + bmxarmc:ridageyr + riagendr:lbdldl + riagendr:lbxglu + bmxsad1:diq010 + riagendr:ridageyr + bmxsad1:bpq040a  + ridageyr:white + ridageyr:diq010 + ridageyr:lbdldl  , sys_lin)
 summary(bpsys_linear2)
 
-export_summs(bpsys_linear2, scale = TRUE)
-write.csv(table1, "model1.csv")
 
 ####keep in original for interaction and transformation 
   #### residual assumption 
@@ -122,6 +118,11 @@ mse <- data.frame(id = seq.int(nrow(lin_frame_test)), true_sys = lin_frame_test$
 ```
 
 ```{r}
+#___________________________________________________________________________________________________
+#### CONSTRUCTING LINEAR MODEL FOR DIASTOLIC BLOOD PRESSURE 
+#### An initial model is fit to the data in model 1. Assumptions are then amended and a better model is fit in model 2. Lastly, the model 2's performance on the test set is added to the mse data frame 
+#___________________________________________________________________________________________________
+
 #### Diastolic prediction 
 #### correlation
 dia_lin <- subset(lin_frame_clean, select=-c(sys_mean,ridreth3,mult))
@@ -181,8 +182,7 @@ summary(bpdia_linear1)
 bpdia_linear2 = lm(dia_mean~ bmxarmc + bmxsad1 + log(bmxwt) + riagendr + ridageyr + I(ridageyr^2) + white + black + asian + diq010 + log(lbdldl) + lbxtc + bpq020 + bpq040a + ridageyr:white +  bmxsad1:ridageyr + ridageyr:bpq040a + riagendr:lbdldl,dia_lin)
 summary(bpdia_linear2)
 
-table1 <- export_summs(bpsys_linear2,bpdia_linear2, scale = TRUE)
-write.csv(table1, "model2.csv")
+
   #### residual assumption 
   #### overal residual values 
   plot(bpdia_linear2$fitted.values,bpdia_linear2$residuals)
@@ -209,90 +209,28 @@ mse$lin_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 ```
 
-
-
 ```{r}
-### Density frame and plot for dia 
-  ### Frame Creation 
-  density_dia <- mse %>% select(predicted_dia,true_dia,first_dia)
-  density_dia <- melt(density_dia)
-  
-  ### Plot 
-  ggplot(density_dia, aes(x=value, fill=variable)) +
-    geom_density(alpha=0.4)
-  
-  
-### MSE frame and plot for dia
-  bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse) %>% summarise(predict_sys_mse = mean(sys_lin_mse), predict_dia_mse = mean(dia_lin_mse))
-  bar_dia <- melt(bar_dia)
-  bar_dia[,1] <- as.character(bar_dia[,1])
-  bar_dia[1,1] <- "Systolic Blood Pressure"
-  bar_dia[2,1] <- "Diastolic Blood Pressure"
-  bar_dia[,1] <- as.factor(bar_dia[,1])
-  ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-  geom_bar(stat="identity") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
-   x="Blood Pressure", y="Mean Squared Error")
-  
-```
-
-```{r}
-### Density frame and plot for sys
-  ### Frame Creation 
-  density_sys <- mse %>% select(predicted_sys,true_sys,first_sys)
-  density_sys <- melt(density_sys)
-  
-  ### Plot 
-  ggplot(density_sys, aes(x=value, fill=variable)) +
-    geom_density(alpha=0.4)
-
-### MSE frame and plot for sys 
-  bar_sys <- mse %>% select(first_sys_mse, predict_sys_mse) %>% summarise(first_sys_mse = mean(first_sys_mse), predict_sys_mse = mean(predict_sys_mse))
-  bar_sys <- melt(bar_sys)
-  
-  ggplot(bar_sys, aes(x=variable, y=value, fill = variable)) +
-  geom_bar(stat="identity") + theme_minimal() 
-
-  
-  
-### NEED TO THROW OUT DIASTOLIC OBSERVATION 
-### CHECK FOR OUTLIERS AFTER CORRECTION 
-### SCATTER PLOT FIRST vs. TRUE 
-### DIASTOLIC HAS A QUADRATIC TREND WITH AGE 
-### PREDICITNG BLOOD PRESSURE TRAJECTORY USING CLUSTERING 
-### Histogram of differences 
+#___________________________________________________________________________________________________
+#### COMPARING PREDICTED VALEUS TO ACTUAL VALUES FROM LINEAR MODELS 
+#___________________________________________________________________________________________________
 ggplot(mse, aes(true_dia,dia_lin))+
     geom_point() + geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + geom_smooth(method="lm")  + labs( 
    x="Predicted Diastolic", y="True Diastolic") + theme_minimal() 
-summary(lm(true_dia~dia_lin,mse))
 
 ggplot(mse, aes(true_sys,sys_lin))+
     geom_point() + geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + geom_smooth(method="lm") + labs( 
    x="Predicted Systolic", y="True Systolic") + theme_minimal()
 
 
-ggplot(mse_try, aes(true_dia,rf_dia_pred))+
-    geom_point() + geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + geom_smooth(method="lm")  + labs( 
-   x="Predicted Diastolic", y="True Diastolic") + theme_minimal()
-summary(lm(true_dia~dia_lin,mse))
-
-ggplot(mse_try, aes(true_sys,rf_sys_pred))+
-    geom_point() + geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + geom_smooth(method="lm") + labs( 
-   x="Predicted Systolic", y="True Systolic") + theme_minimal() 
-
-summary(lm(true_sys~rf_sys_pred, mse_try))
-summary(lm(true_dia~rf_dia_pred, mse_try))
-vara <- lin_frame_clean
-vara$ridageyr[vara$ridageyr>=90 & vara$ridageyr<=99] <- 9
-vara$ridageyr[vara$ridageyr>=80 & vara$ridageyr<=89] <- 8
-vara$ridageyr[vara$ridageyr>=70 & vara$ridageyr<=79] <- 7
-vara$ridageyr[vara$ridageyr>=60 & vara$ridageyr<=69] <- 6
-vara$ridageyr[vara$ridageyr>=50 & vara$ridageyr<=59] <- 5
-vara$ridageyr[vara$ridageyr>=40 & vara$ridageyr<=49] <- 4
-vara$ridageyr[vara$ridageyr>=30 & vara$ridageyr<=39] <- 3
-vara$ridageyr[vara$ridageyr>=20 & vara$ridageyr<=29] <- 2
-vara$ridageyr[vara$ridageyr>=10 & vara$ridageyr<=19] <- 1
-ggplot(vara, aes(x=as.factor(ridageyr),y=sys_mean)) + geom_boxplot() + theme_minimal() + labs(x = "age in decades",y= "Systolic Mean") 
-
-ggplot(vara, aes(x=as.factor(ridageyr),y=dia_mean)) + geom_boxplot() + theme_minimal() + labs(x = "age in decades",y= "Diastolict Mean") 
 ```
+
+
+```{r}
+#___________________________________________________________________________________________________
+#### Exporting Linear MOdels 
+#___________________________________________________________________________________________________
+table1 <- export_summs(bpsys_linear2,bpdia_linear2, scale = TRUE)
+write.csv(table1, "model.csv")
+```
+
 

@@ -5,7 +5,7 @@ editor_options:
 chunk_output_type: inline
 ---
 PRIMARY PURPOSE: 
-The purpose of this .Rmd is to cluster data based on demographic variables. All variables are treated as categorical with the exception of age which is treated as continuous. Since the types of variables are mixed, kprototype clustering is used from the clustMixType library. 
+The purpose of this .Rmd is to cluster data based on demographic variables. All variables are treated as categorical with the exception of age which is treated as continuous. Since the types of variables are mixed, kprototype clustering is used from the clustMixType library. The cluster_final dataframe is required for the lin_cluster .Rmd and thus this file must be run before it. This is because cluster_final fits linear models to the clusters created in this file. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
