@@ -1,7 +1,10 @@
 ---
-title: "lin_cluster"
+title: "linear cluster"
 output: html_document
 ---
+
+PRIMARY PURPOSE: 
+The purpose of this .Rmd is to build linear models for both systolic and diastolic blood pressure on the clusters created in the clustering.Rmd. For the .rmd to run, the clutering.Rmd must be run. This model will be compared to baseline linear model. The hope is that clustering will account for the unequal variance observed in blood pressure and improve predictions. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -17,8 +20,13 @@ library(clustMixType)
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
 
-```{r}
 
+
+```{r}
+#___________________________________________________________________________________________________
+#### CONSTRUCTING LINEAR MODELs for systolic blood pressure on each of the clusters 
+#### The assumptions of these models should be further be checked, but this should give an initial idea. 
+#___________________________________________________________________________________________________
 
 for(i in 1:4)
 {
@@ -30,7 +38,14 @@ for(i in 1:4)
   assign(paste0("cluster_lin_sys",i),cluster_lin_sys)
 
 }
+```
 
+
+
+```{r}
+#___________________________________________________________________________________________________
+#### MAKING PREDICTIONS ON THE TEST FOR SYSTOLIC 
+#___________________________________________________________________________________________________
 #### prediction for cluster 1
 cluster_frame1 <- lin_frame_test %>% filter(cluster == 1) 
 lin1_predictions_sys = predict(cluster_lin_sys1, newdata = cluster_frame1)
@@ -52,6 +67,7 @@ cluster_frame4 <- lin_frame_test %>% filter(cluster == 4)
 lin4_predictions_sys = predict(cluster_lin_sys4, newdata = cluster_frame4)
 summary(lin4_predictions_sys)
 
+#### RECOMBINING INTO A SINGLE PREDICTION FRAME USING INDEX 
 #### one vector of mse 
 a <- data.frame(id = cluster_frame1$id, linclust_predictions_sys = lin1_predictions_sys) 
 b <- data.frame(id = cluster_frame2$id, linclust_predictions_sys = lin2_predictions_sys) 
@@ -67,7 +83,10 @@ mse$sys_lincluster_mse <- (mse$true_sys - mse$linclust_predictions_sys)^2
 ```
 
 ```{r}
-
+#___________________________________________________________________________________________________
+#### CONSTRUCTING LINEAR MODELs for diastolic blood pressure on each of the clusters 
+#### The assumptions of these models should be further be checked, but this should give an initial idea. 
+#___________________________________________________________________________________________________
 for(i in 1:4)
 {
   cluster_train <- cluster_final %>% filter(cluster == i)
@@ -78,7 +97,12 @@ for(i in 1:4)
   assign(paste0("cluster_lin_dia",i),cluster_lin_dia)
 
 }
+```
 
+```{r}
+#___________________________________________________________________________________________________
+#### MAKING PREDICTIONS ON THE TEST FOR DIASTOLIC 
+#___________________________________________________________________________________________________
 #### prediction for cluster 1
 cluster_frame1 <- lin_frame_test %>% filter(cluster == 1) 
 lin1_predictions_dia = predict(cluster_lin_dia1, newdata = cluster_frame1)
@@ -118,13 +142,5 @@ mse$linclust_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 ```
 
-```{r}
-bar_dia <- mse %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse,dia_lincluster_mse,sys_lincluster_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse),  linclust_sys_mse = mean(sys_lincluster_mse), linclust_dia_mse = mean(dia_lincluster_mse))
-bar_dia <- melt(bar_dia)
 
-
-ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-geom_bar(stat="summary") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
-   x="Blood Pressure", y="Mean Squared Error")
-```
 

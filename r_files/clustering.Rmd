@@ -102,6 +102,24 @@ ggplot(cluster_final, aes(x=sys_mean, y=dia_mean, color=cluster)) + geom_point()
 
 ```{r}
 #___________________________________________________________________________________________________
+#### ASSIGNING CLUSTERS TO TEST SET 
+#### This is for evaluting model performance on the clusters in lin_cluster.Rmd 
+#___________________________________________________________________________________________________
+#### cleaning test 
+cluster_test <- subset(lin_frame_test, select=c(riagendr,diq010,ridreth3,ridageyr,bpq040a, bpq020))
+cluster_test$riagendr <- as.factor(cluster_test$riagendr)
+cluster_test$ridreth3 <- as.factor(cluster_test$ridreth3)
+cluster_test$diq010 <- as.factor(cluster_test$diq010)
+cluster_test$bpq040a <- as.factor(cluster_test$bpq040a)
+cluster_test$bpq020 <- as.factor(cluster_test$bpq020)
+#### assigning clusters 
+cluster_prediction <- predict(kproto_fit,cluster_test)
+lin_frame_test$cluster <- cluster_prediction$cluster 
+```
+
+
+```{r}
+#___________________________________________________________________________________________________
 #### ADDING AN INDEX 
 #### this index will be important later for cluster predictions 
 #___________________________________________________________________________________________________

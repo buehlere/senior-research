@@ -1,5 +1,5 @@
 ---
-title: "linear_model"
+title: "linear model"
 output: html_document
 editor_options: 
 chunk_output_type: console
@@ -15,7 +15,6 @@ library(readr)
 library(matrixStats)
 library(reshape2)
 library(car) 
-library(MASS)
 library(jtools) ###exporting linear models 
 ```
 
