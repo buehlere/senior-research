@@ -1,0 +1,64 @@
+---
+title: "comparison"
+output: html_document
+---
+
+PRIMARY PURPOSE: 
+The purpose of this .Rmd is to compare the models built in linear_model.Rmd, lin_cluster.Rmd, decision tree.Rmd, random_forst.Rmd. The data for this is in the mse data frame created in the linear_model.Rmd. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+library(reshape2)
+
+knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
+```
+
+
+```{r}
+#___________________________________________________________________________________________________
+#### COMPARING MODEL PERFORMANCE USING MAHALANOBIS DISTANCE 
+#___________________________________________________________________________________________________
+bar_dia <- mse %>% select(lin_mal, linclust_mal, btree_mal, rf_mal) %>% summarise(linear = sqrt(mean(lin_mal)), cluster_linear = sqrt(mean(linclust_mal)), dtree = sqrt(mean(btree_mal)), rforest = sqrt(mean(rf_mal)))
+bar_dia <- melt(bar_dia)
+
+
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary") + theme_minimal() + labs(x="Model Type", y="Root Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) +  theme(axis.text.x = element_text(angle = 60, hjust = 1),legend.position="none") + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest")) 
+```
+
+
+
+```{r}
+#___________________________________________________________________________________________________
+#### COMPARING MODEL PERFORMANCE USING SYSTOLIC RMSE 
+#___________________________________________________________________________________________________
+bar_dia <- mse %>% select(sys_lin_mse, sys_lincluster_mse, btree_sys_mse, rf_sys_mse ) %>% summarise(lin_sys_mse = sqrt(mean(sys_lin_mse)), linclust_sys_mse = sqrt(mean(sys_lincluster_mse)), btree_sys_mse = sqrt(mean(btree_sys_mse)), rf_sys_mse = sqrt(mean(rf_sys_mse)))
+bar_dia <- melt(bar_dia)
+
+#+ scale_fill_brewer(palette="OrRd")
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary")  + labs( 
+   x="Blood Pressure", y="Root Mean Squared Error") + theme_minimal() + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5),legend.position="none") + scale_colour_grey() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest"))
+```
+
+```{r}
+#___________________________________________________________________________________________________
+#### COMPARING MODEL PERFORMANCE USING DIASTOLIC RMSE 
+#___________________________________________________________________________________________________
+bar_dia <- mse %>% select(dia_lin_mse, dia_lincluster_mse, btree_dia_mse, rf_dia_mse ) %>% summarise(lin_dia_mse = sqrt(mean(dia_lin_mse)), linclust_dia_mse = sqrt(mean(dia_lincluster_mse)), btree_dia_mse = sqrt(mean(btree_dia_mse)), rf_dia_mse = sqrt(mean(rf_dia_mse))) 
+bar_dia <- melt(bar_dia)
+
+#+ scale_fill_brewer(palette="OrRd")
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary")  + labs( 
+   x="Blood Pressure", y="Root Mean Squared Error") + theme_minimal() + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5),legend.position="none") + scale_colour_grey() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest"))
+```
+
+
+
+

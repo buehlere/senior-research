@@ -3,6 +3,9 @@ title: "mahalanobis_comp"
 output: html_document
 ---
 
+PRIMARY PURPOSE: 
+The purpose of this .Rmd is to find an appropriate cut off mahalanobis distnace.  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(caret) 
@@ -14,7 +17,11 @@ library(ggfortify)
 ```
 
 
+
 ```{r}
+#___________________________________________________________________________________________________
+#### FINDING CUT-OFF MAHALANOBIS DISTANCE via COMPARISON TO THE CHI-SQUARE DISTRIBUTION 
+#___________________________________________________________________________________________________
 #### looking at distances 
 hist(mse$rf_mal)
 summary(mse$rf_mal)
@@ -22,20 +29,11 @@ summary(mse$rf_mal)
 
 #### finding outlier cut-off  
 outlier <- data.frame(sys = mse_try$rf_pred_sys, dia = mse_try$rf_pred_dia)
-mahalanobis(outlier$sys,outlier$dia,cov(outlier$sys,outlier$dia))
-outlier
-hist(outlier)
 
 
 #### finding cut-offs 
 threshold <- sqrt(qchisq(p = 0.95, df = 2))
-threshold
-which(outlier > threshold)
 
-#### visualizing cutoff 
-qqplot(qchisq(ppoints(1204), df = 2), mse_try$rf_mal,
-       main = expression("Q-Q plot of Mahalanobis" * ~outlier^2 *
-                         " vs. quantiles of" * ~ chi[2]^2),xlab = "Chi-Square",ylab = "Mahalanobis")
 
 # set cutoff using chi square distribution
 threshold <- sqrt(qchisq(ppoints(1204), df = 2,lower.tail = FALSE)) # df = no of columns
@@ -46,8 +44,20 @@ outlier <- mse_try$rf_mal
 outlier <- as.data.frame(outlier)
 outlier$color <- as.factor(ifelse(mse_try$rf_mal >= 93 ,"over","under"))
 quantile(outlier, 0.95)
+
+
+#### visualizing cutoff 
+qqplot(qchisq(ppoints(1204), df = 2), mse_try$rf_mal,
+       main = expression("Q-Q plot of Mahalanobis" * ~outlier^2 *
+                         " vs. quantiles of" * ~ chi[2]^2),xlab = "Chi-Square",ylab = "Mahalanobis")
+
+```
+
+
+```{r}
+#___________________________________________________________________________________________________
+#### VISUALIZING OUTLIERS 
+#___________________________________________________________________________________________________
 outlier %>% ggplot(aes(sqrt(outlier), fill=color)) + geom_histogram() + theme_minimal() +labs(x = "Distance Between True and Predicted Blood Pressure") + guides(fill=guide_legend(title="95 Percentile"))
-#### NOTES FROM MEETING TODAY: 
-#### vastly the same predictions or bad clusters, probabilities to cluster
 ```
 

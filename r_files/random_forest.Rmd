@@ -1,9 +1,14 @@
 ---
-title: "random_forest"
+title: "random forest"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+chunk_output_type: console
 ---
+
+PRIMARY PURPOSE: 
+The purpose of this .Rmd is to build a random forest model for both systolic and diastolic blood pressure to compare to the linear baseline. The mse data frame created in the linear_model.Rmd is updated with the decision trees performance. As a result running linear_model.Rmd is necessary for this file to function properly. 
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -21,16 +26,25 @@ knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/
 
 
 ```{r}
+#___________________________________________________________________________________________________
+#### CONSTRUCTING RANDOM FOREST for systolic blood pressure on each of the clusters 
+#___________________________________________________________________________________________________
+
+####building the model
 sys_tree <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
-trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
-tunegrid = expand.grid(mtry=c(1:10))
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 1)
+tunegrid = expand.grid(mtry=c(1:2)) ###tuning parameter
 rf_sys_tree = train(sys_mean~., 
                                data = sys_tree, method = "rf", 
                                parms = list(split = "information"), 
-                               trControl=trctrl,ntrees = 100,tuneGrid = tunegrid)
+                               trControl=trctrl,ntrees = 10,tuneGrid = tunegrid,importance=TRUE)
 plot(rf_sys_tree)
 rf_sys_tree$results
 
+#evaluate variable importance
+varImp(rf_sys_tree, scale = FALSE)
+sys_imp <- as.data.frame(varImp(rf_sys_tree, scale = FALSE)$importance)
+sys_imp$X1 <- rownames(sys_imp)
 ### prediction 
 rf_sys_pred <- predict(rf_sys_tree, newdata = lin_frame_test)
 
@@ -38,29 +52,35 @@ rf_sys_pred <- predict(rf_sys_tree, newdata = lin_frame_test)
 mse$rf_pred_sys <- rf_sys_pred
 
 mse$rf_sys_mse <- (mse$true_sys - mse$rf_pred_sys)^2
+```
 
-
-write.csv(sys_tree,"sys_tree.csv")
-
+```{r}
+#___________________________________________________________________________________________________
+#### PLOTTING VARIABLE PERFORMANCE for SYSTOLIC 
+#___________________________________________________________________________________________________
+ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) + labs(x="Predictor", y="Importance to Systolic")
 ```
 
 
 ```{r}
+#___________________________________________________________________________________________________
+#### CONSTRUCTING RANDOM FOREST for diastolic blood pressure on each of the clusters 
+#___________________________________________________________________________________________________
+####building the model 
 dia_tree <- subset(lin_frame_clean, select=-c(sys_mean,ridreth3,mult))
 trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
-tunegrid = expand.grid(mtry=c(1:10))
+tunegrid = expand.grid(mtry=c(1:10)) ###tuning parameter
 rf_dia_tree = train(dia_mean~., 
                                data = dia_tree, method = "rf", 
                                parms = list(split = "information"), 
-                               trControl=trctrl,ntrees = 100,tuneGrid = tunegrid,importance = TRUE)
+                               trControl=trctrl,ntrees = 1000,tuneGrid = tunegrid,importance = TRUE)
 plot(rf_dia_tree)
 rf_dia_tree$results
 
-write.csv(dia_tree,"dia_tree.csv")
-write.csv(mse,"mse.csv")
-write.csv(lin_frame_test,"test.csv")
 #Evaluate variable importance
 varImp(rf_dia_tree, scale = FALSE)
+dia_imp <- as.data.frame(varImp(rf_dia_tree, scale = FALSE)$importance)
+dia_imp$X1 <- rownames(sys_imp)
 
 ### prediction 
 rf_dia_pred <- predict(rf_dia_tree, newdata = lin_frame_test)
@@ -78,41 +98,11 @@ mse$rf_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 
 
 ```{r}
-bar_dia <- mse_try %>% select(lin_mal, linclust_mal, btree_mal, rf_mal) %>% summarise(linear = sqrt(mean(lin_mal)), cluster_linear = sqrt(mean(linclust_mal)), dtree = sqrt(mean(btree_mal)), rforest = sqrt(mean(rf_mal)))
-bar_dia <- melt(bar_dia)
-
-
-ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-geom_bar(stat="summary") + theme_minimal() + labs(x="Model Type", y="Root Mean Mahalanobis Distance") + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5)) +  theme(axis.text.x = element_text(angle = 60, hjust = 1),legend.position="none") + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest")) 
-```
-
-
-
-```{r}
-bar_dia <- mse_try %>% select(sys_lin_mse, sys_lincluster_mse, btree_sys_mse, rf_sys_mse ) %>% summarise(lin_sys_mse = sqrt(mean(sys_lin_mse)), linclust_sys_mse = sqrt(mean(sys_lincluster_mse)), btree_sys_mse = sqrt(mean(btree_sys_mse)), rf_sys_mse = sqrt(mean(rf_sys_mse)))
-bar_dia <- melt(bar_dia)
-
-#+ scale_fill_brewer(palette="OrRd")
-ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-geom_bar(stat="summary")  + labs( 
-   x="Blood Pressure", y="Root Mean Squared Error") + theme_minimal() + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5),legend.position="none") + scale_colour_grey() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest"))
-```
-
-```{r}
-bar_dia <- mse_try %>% select(dia_lin_mse, dia_lincluster_mse, btree_dia_mse, rf_dia_mse ) %>% summarise(lin_dia_mse = sqrt(mean(dia_lin_mse)), linclust_dia_mse = sqrt(mean(dia_lincluster_mse)), btree_dia_mse = sqrt(mean(btree_dia_mse)), rf_dia_mse = sqrt(mean(rf_dia_mse))) 
-bar_dia <- melt(bar_dia)
-
-#+ scale_fill_brewer(palette="OrRd")
-ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
-geom_bar(stat="summary")  + labs( 
-   x="Blood Pressure", y="Root Mean Squared Error") + theme_minimal() + guides(fill=guide_legend(title="Model")) + scale_fill_discrete(labels=c("Linear Regression","Linear Regressions with Clustering","Decision Tree", "Decision Tree with Clustering", "Lasso Regression", "Random Forest")) + theme(plot.title = element_text(hjust = 0.5),legend.position="none") + scale_colour_grey() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + scale_x_discrete(labels=c("Linear","Linear w/ Clustering","Decision Trees","Random Forest"))
-```
-
-```{r}
-dia_imp <- dia_imp[order(dia_imp$Overall,decreasing = TRUE),]
+#___________________________________________________________________________________________________
+#### PLOTTING VARIABLE PERFORMANCE for SYSTOLIC 
+#___________________________________________________________________________________________________
 ggplot(dia_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Black","Hispanic","White","HDL Chol.","Glucose","Diabetes","Gender","Hypertension Med.", "Asian","Leg Circum.","Lower Arm Circum.", "Hypertension","LDL Chol.","Height","Abdomin Circum.","Upper Arm Circum.","Cholesterol","BMI","Weight","Waist Circum.","Age")) + labs( 
    x="Predictor", y="Importance to Diastolic Pressure")
 
-ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) + labs(x="Predictor", y="Importance to Systolic")
-```
 
+```

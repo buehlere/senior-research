@@ -2,8 +2,18 @@
 title: "misc"
 output: html_document
 ---
+PRIMARY PURPOSE: 
+This file simply contains various lines of code developed for this project but went un-used. 
 
 ```{r setup, include=FALSE}
+library(caret) 
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Hmisc)
+library(ggfortify)
+library(rpart.plot)
+library(clustMixType)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -70,3 +80,196 @@ ggplot(vara, aes(x=as.factor(ridageyr),y=dia_mean)) + geom_boxplot() + theme_min
 ```
 
 
+```{r}
+
+train_sys <- subset(cluster_final, select=-c(dia_mean,id))
+
+for(i in 1:4)
+{
+  cluster_train_sys <- train_sys %>% filter(cluster == i)
+
+  #### using information criteria:
+  trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+  tree_information = train(sys_mean~., 
+                                data = cluster_train_sys[,c(-24)], method = "rpart", 
+                                parms = list(split = "information"), 
+                                trControl=trctrl, tuneLength = 10)
+  assign(paste0("cluster_tree_sys",i),tree_information)
+
+}
+
+
+
+#### Fairly similar performance, but information looks slightly better. 
+
+#### Looking at variable performance: 
+  #### cluster 1 
+  prp(cluster_tree_sys1$finalModel, 
+      box.palette = "Blues", 
+      tweak = 1.2)
+  
+  #### cluster 2 
+  prp(cluster_tree_sys2$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+  
+  #### cluster 3 
+  prp(cluster_tree_sys3$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+  
+  #### cluster 4 
+  prp(cluster_tree_sys4$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+
+
+#### prediction for cluster 1 
+#### cleaning test 
+cluster_test <- subset(lin_frame_test, select=c(riagendr,diq010,ridreth3,ridageyr,bpq040a, bpq020))
+cluster_test$riagendr <- as.factor(cluster_test$riagendr)
+cluster_test$ridreth3 <- as.factor(cluster_test$ridreth3)
+cluster_test$diq010 <- as.factor(cluster_test$diq010)
+cluster_test$bpq040a <- as.factor(cluster_test$bpq040a)
+cluster_test$bpq020 <- as.factor(cluster_test$bpq020)
+
+#### assigning clusters 
+cluster_prediction <- predict(kproto_fit,cluster_test)
+lin_frame_test$cluster <- cluster_prediction$cluster 
+
+#### CLUSTER ANALYSIS 
+head(cluster_prediction$dists)
+summary(kproto_fit,cluster_test)
+clprofiles(kproto_fit,cluster_expl)
+cluster_expl <- cluster_frame
+cluster_expl$dia <- lin_frame_clean$dia_mean
+cluster_expl$sys <- lin_frame_clean$sys_mean
+
+
+#### prediction for cluster 1
+cluster_frame1 <- lin_frame_test %>% filter(cluster == 1) 
+tree1_predictions_sys = predict(cluster_tree_sys1, newdata = cluster_frame1)
+summary(tree1_predictions_sys)
+
+
+#### prediction for cluster 2
+cluster_frame2 <- lin_frame_test %>% filter(cluster == 2)
+tree2_predictions_sys = predict(cluster_tree_sys2, newdata = cluster_frame2)
+summary(tree2_predictions_sys)
+
+#### prediction for cluster 3
+cluster_frame3 <- lin_frame_test %>% filter(cluster == 3)
+tree3_predictions_sys = predict(cluster_tree_sys3, newdata = cluster_frame3)
+summary(tree3_predictions_sys)
+
+#### prediction for cluster 4
+cluster_frame4 <- lin_frame_test %>% filter(cluster == 4)
+tree4_predictions_sys = predict(cluster_tree_sys4, newdata = cluster_frame4)
+summary(tree4_predictions_sys)
+
+#### one vector of mse 
+a <- data.frame(id = cluster_frame1$id, tree_predictions_sys = tree1_predictions_sys) 
+b <- data.frame(id = cluster_frame2$id, tree_predictions_sys = tree2_predictions_sys) 
+c <- data.frame(id = cluster_frame3$id, tree_predictions_sys = tree3_predictions_sys) 
+d <- data.frame(id = cluster_frame4$id, tree_predictions_sys = tree4_predictions_sys) 
+tree_predictions_sys <- do.call("rbind", list(a,b,c,d))
+### MSE data frame 
+mse <- merge(mse,tree_predictions_sys, by = "id")
+
+mse$sys_tree_mse <- (mse$true_sys - mse$tree_predictions_sys)^2
+
+```
+
+```{r}
+
+train_dia <- subset(cluster_final, select=-c(sys_mean, id))
+
+for(i in 1:4)
+{
+  cluster_train_dia <- train_dia %>% filter(cluster == i)
+  #### using information criteria:
+  trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
+  tree_information = train(dia_mean~., 
+                                data = cluster_train_dia[,c(-24)], method = "rpart", 
+                                parms = list(split = "information"), 
+                                trControl=trctrl, tuneLength = 10)
+  
+  assign(paste0("cluster_tree_dia",i),tree_information)  
+}
+
+
+
+#### Fairly similar performance, but information looks slightly better. 
+
+#### Looking at variable performance: 
+  #### cluster 1 
+  prp(cluster_tree_dia1$finalModel, 
+      box.palette = "Blues", 
+      tweak = 1.2)
+  
+  #### cluster 2 
+  prp(cluster_tree_dia2$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+  
+  #### cluster 3 
+  prp(cluster_tree_dia3$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+  
+  #### cluster 4 
+  prp(cluster_tree_dia4$finalModel, 
+    box.palette = "Blues", 
+    tweak = 1.2)
+
+
+#### prediction for cluster 1 
+tree1_predictions_dia = predict(cluster_tree_dia1, newdata = cluster_frame1)
+summary(tree1_predictions_dia)
+
+
+#### prediction for cluster 2
+tree2_predictions_dia = predict(cluster_tree_dia2, newdata = cluster_frame2)
+summary(tree2_predictions_dia)
+
+#### prediction for cluster 3
+tree3_predictions_dia = predict(cluster_tree_dia3, newdata = cluster_frame3)
+summary(tree3_predictions_dia)
+
+#### prediction for cluster 4
+tree4_predictions_dia = predict(cluster_tree_dia4, newdata = cluster_frame4)
+summary(tree4_predictions_dia)
+
+#### one vector of mse 
+a <- data.frame(id = cluster_frame1$id, tree_predictions_dia = tree1_predictions_dia) 
+b <- data.frame(id = cluster_frame2$id, tree_predictions_dia = tree2_predictions_dia) 
+c <- data.frame(id = cluster_frame3$id, tree_predictions_dia = tree3_predictions_dia) 
+d <- data.frame(id = cluster_frame4$id, tree_predictions_dia = tree4_predictions_dia) 
+tree_predictions_dia <- do.call("rbind", list(a,b,c,d))
+### MSE data frame 
+mse <- merge(mse,tree_predictions_dia, by = "id")
+
+mse$dia_tree_mse <- (mse$true_dia - mse$tree_predictions_dia)^2
+
+
+### malahonbis distance 
+mal_pred <- cbind(mse$tree_predictions_dia,mse$tree_predictions_sys)
+mal_true <- cbind(mse$true_dia,mse$true_sys)
+mse$treeclust_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
+
+```
+
+
+```{r}
+#### comparison to linear 
+bar_dia <- mse_try %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse))
+bar_dia <- melt(bar_dia)
+
+bar_sys <- mse_try %>% select(sys_lin_mse, dia_lin_mse, sys_tree_mse, dia_tree_mse, btree_sys_mse, btree_dia_mse) %>% summarise(lin_sys_mse = mean(sys_lin_mse), lin_dia_mse = mean(dia_lin_mse), tree_sys_mse = mean(sys_tree_mse), tree_dia_mse = mean(dia_tree_mse), btree_sys_mse = mean(btree_sys_mse), btree_dia_mse = mean(btree_dia_mse))
+bar_dia <- melt(bar_dia)
+
+
+ggplot(bar_dia, aes(x=variable, y=value, fill = variable)) +
+geom_bar(stat="summary") + theme_minimal() + labs(title="MSE of Linear Regression Prediction for Systolic and Diastolic Blood Pressure", 
+   x="Blood Pressure", y="Mean Squared Error")
+```
