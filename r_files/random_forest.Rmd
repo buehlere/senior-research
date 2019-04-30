@@ -32,12 +32,12 @@ knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/
 
 ####building the model
 sys_tree <- subset(lin_frame_clean, select=-c(dia_mean,ridreth3,mult))
-trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 1)
+trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
 tunegrid = expand.grid(mtry=c(1:2)) ###tuning parameter
 rf_sys_tree = train(sys_mean~., 
                                data = sys_tree, method = "rf", 
                                parms = list(split = "information"), 
-                               trControl=trctrl,ntrees = 10,tuneGrid = tunegrid,importance=TRUE)
+                               trControl=trctrl,ntrees = 1000,tuneGrid = tunegrid,importance=TRUE)
 plot(rf_sys_tree)
 rf_sys_tree$results
 
@@ -69,7 +69,7 @@ ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(sta
 ####building the model 
 dia_tree <- subset(lin_frame_clean, select=-c(sys_mean,ridreth3,mult))
 trctrl = trainControl(method = "repeatedcv", number = 10, repeats = 3)
-tunegrid = expand.grid(mtry=c(1:10)) ###tuning parameter
+tunegrid = expand.grid(mtry=c(1:2)) ###tuning parameter
 rf_dia_tree = train(dia_mean~., 
                                data = dia_tree, method = "rf", 
                                parms = list(split = "information"), 
@@ -106,3 +106,35 @@ ggplot(dia_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(sta
 
 
 ```
+
+```{r}
+#___________________________________________________________________________________________________
+#### COMPARING PREDICTED VALEUS TO ACTUAL VALUES FROM LINEAR MODELS 
+#___________________________________________________________________________________________________
+ggplot(mse, aes(true_dia,rf_pred_dia))+
+  geom_point() + 
+  geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + 
+  geom_smooth(method="lm",aes(col = "slope = 2")) +
+  labs(x="Predicted Diastolic", y="True Diastolic") + 
+  theme_minimal() +
+  theme(axis.text=element_text(size=12), axis.title=element_text(size=12,face="bold")) 
+
+ggplot(mse, aes(true_sys,rf_pred_sys))+
+  geom_point() + 
+  geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + 
+  geom_smooth(method="lm",aes(col = "slope = 2")) +
+  labs(x="Predicted Systolic", y="True Systolic") + 
+  theme_minimal() +
+  theme(axis.text=element_text(size=12), axis.title=element_text(size=12,face="bold")) 
+
+
+```
+
+```{r}
+#___________________________________________________________________________________________________
+#### Saving Finalized Models 
+#___________________________________________________________________________________________________
+save(rf_dia_tree , file = 'RandomForestDia.rda')
+save(rf_sys_tree , file = 'RandomForestSys.rda')
+```
+
