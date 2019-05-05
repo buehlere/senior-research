@@ -58,7 +58,14 @@ mse$rf_sys_mse <- (mse$true_sys - mse$rf_pred_sys)^2
 #___________________________________________________________________________________________________
 #### PLOTTING VARIABLE PERFORMANCE for SYSTOLIC 
 #___________________________________________________________________________________________________
-ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) + labs(x="Predictor", y="Importance to Systolic")
+sys_plot <- sys_imp[order(sys_imp[,1]),][11:21,]
+ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + 
+  geom_bar(stat = "summary") + 
+  coord_flip()  + 
+  theme_minimal() + 
+  scale_fill_discrete(guide=FALSE) + 
+  scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) +   labs(x="Predictor", y="Importance to Systolic") +
+  theme(axis.text=element_text(size=20), axis.title=element_text(size=20)) 
 ```
 
 
@@ -101,8 +108,11 @@ mse$rf_mal <- mahalanobis(mal_pred, mal_true, cov(mal_pred,mal_true))
 #___________________________________________________________________________________________________
 #### PLOTTING VARIABLE PERFORMANCE for SYSTOLIC 
 #___________________________________________________________________________________________________
+dia_plot <- dia_imp[order(dia_imp[,1]),][11:21,]
+
 ggplot(dia_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(stat = "summary") + coord_flip()  + theme_minimal() + scale_fill_discrete(guide=FALSE) + scale_x_discrete(labels=c("Black","Hispanic","White","HDL Chol.","Glucose","Diabetes","Gender","Hypertension Med.", "Asian","Leg Circum.","Lower Arm Circum.", "Hypertension","LDL Chol.","Height","Abdomin Circum.","Upper Arm Circum.","Cholesterol","BMI","Weight","Waist Circum.","Age")) + labs( 
-   x="Predictor", y="Importance to Diastolic Pressure")
+   x="Predictor", y="Importance to Diastolic Pressure") +
+  theme(axis.text=element_text(size=20), axis.title=element_text(size=20)) 
 
 
 ```
@@ -111,30 +121,34 @@ ggplot(dia_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) + geom_bar(sta
 #___________________________________________________________________________________________________
 #### COMPARING PREDICTED VALEUS TO ACTUAL VALUES FROM LINEAR MODELS 
 #___________________________________________________________________________________________________
-ggplot(mse, aes(true_dia,rf_pred_dia))+
+ggplot(mse, aes(true_dia,dia_lin))+
   geom_point() + 
   geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + 
-  geom_smooth(method="lm",aes(col = "slope = 2")) +
+  geom_smooth(method="lm",aes(col = "Fitted Line")) +
   labs(x="Predicted Diastolic", y="True Diastolic") + 
   theme_minimal() +
-  theme(axis.text=element_text(size=12), axis.title=element_text(size=12,face="bold")) 
+  theme(axis.text=element_text(size=20), axis.title=element_text(size=20,face="bold"),legend.text=element_text(size=20)) 
 
-ggplot(mse, aes(true_sys,rf_pred_sys))+
+ggplot(mse, aes(true_sys,sys_lin))+
   geom_point() + 
   geom_abline(aes(intercept=0, slope=1, col = "slope = 1")) + 
-  geom_smooth(method="lm",aes(col = "slope = 2")) +
+  geom_smooth(method="lm",aes(col = "Fitted Line")) +
   labs(x="Predicted Systolic", y="True Systolic") + 
   theme_minimal() +
-  theme(axis.text=element_text(size=12), axis.title=element_text(size=12,face="bold")) 
+  theme(axis.text=element_text(size=20), axis.title=element_text(size=20,face="bold"),legend.text=element_text(size=20)) 
 
-
+summary(lm(true_dia~rf_pred_dia,mse))
+summary(lm(true_sys~rf_pred_sys,mse))
 ```
 
 ```{r}
 #___________________________________________________________________________________________________
 #### Saving Finalized Models 
 #___________________________________________________________________________________________________
+
+###age, wasit circum, 
 save(rf_dia_tree , file = 'RandomForestDia.rda')
 save(rf_sys_tree , file = 'RandomForestSys.rda')
+write.csv(mse,"mse.csv")
 ```
 

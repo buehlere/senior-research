@@ -208,6 +208,10 @@ train_ind <- sample(seq_len(nrow(lin_frame)), size = smp_size)
 lin_frame <- lin_frame[train_ind, ]
 lin_frame_test <- lin_frame[-train_ind, ]
 
+####saving blood pressures for distance test 
+lin_frame_test_bp <- lin_frame[-train_ind, ]
+lin_frame_test_bp$bmxrecum <- NULL 
+lin_frame_test_bp <- na.omit(lin_frame_test_bp)
 ```
 
 ```{r}

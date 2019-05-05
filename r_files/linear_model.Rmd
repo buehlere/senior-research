@@ -232,4 +232,24 @@ table1 <- export_summs(bpsys_linear2,bpdia_linear2, scale = TRUE)
 write.csv(table1, "model.csv")
 ```
 
+```{r}
+minVal <- 40
+maxVal <- 100
+mn <- (maxVal - minVal)/2
+# Generate numbers (mostly) from min to max
+y1 <- rnorm(30, mean = mn, sd = mn/3)
+
+
+minVal <- 70
+maxVal <- 190
+mn <- (maxVal - minVal)/2
+# Generate numbers (mostly) from min to max
+x1 <- rnorm(30, mean = mn, sd = mn/3)
+# Do something about the out-of-bounds generated values
+
+plotter <- merge(x1,y1)
+ggplot(plotter,aes(x=y1,y=x1)) + geom_point()
+
+
+```
 

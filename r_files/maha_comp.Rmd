@@ -4,7 +4,7 @@ output: html_document
 ---
 
 PRIMARY PURPOSE: 
-The purpose of this .Rmd is to find an appropriate cut off mahalanobis distnace.  
+The purpose of this .Rmd is to find an appropriate cut off mahalanobis distnace and test the rule on a test set.  
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -16,7 +16,30 @@ library(Hmisc)
 library(ggfortify)
 ```
 
+```{r}
+####graphical illustration of mahalonbis distance 
+n <- 1000 ; mean1 = 121 ; mean2 = 68; std1 <- 2 ; std2 <- 4 ; p <-.9
 
+x <- rnorm(n,mean1,std1)
+
+y <- std2 * p * (x-mean1)/std1 + mean2 + std2*rnorm(n,0,sqrt(1-p^2))
+
+demo <- data.frame(dia = y, sys = x)
+
+
+ggplot(demo, aes(dia, sys)) + 
+  geom_point() +
+  labs(x="Diastolic", y="Systolic") + 
+  theme_minimal() +
+  theme(axis.text=element_text(size=20), axis.title=element_text(size=20,face="bold"),legend.text=element_text(size=20),plot.caption = element_text(size = 10)) +
+  annotate("point", x = 65, y = 123,
+  colour = "blue",size=8,shape=17) +
+  annotate("point", x = 68, y = 121,
+  colour = "red",size=8) +
+  annotate("point", x = 71, y = 122.5,
+  colour = "green",size=8,shape=15)
+
+```
 
 ```{r}
 #___________________________________________________________________________________________________
@@ -27,29 +50,20 @@ hist(mse$rf_mal)
 summary(mse$rf_mal)
 
 
-#### finding outlier cut-off  
-outlier <- data.frame(sys = mse_try$rf_pred_sys, dia = mse_try$rf_pred_dia)
-
-
-#### finding cut-offs 
-threshold <- sqrt(qchisq(p = 0.95, df = 2))
-
-
-# set cutoff using chi square distribution
-threshold <- sqrt(qchisq(ppoints(1204), df = 2,lower.tail = FALSE)) # df = no of columns
-
-# find outliers
-mse_try$rf_mal[which(mse_try$rf_mal < threshold)] # gives the row numbers of outliers
-outlier <- mse_try$rf_mal
-outlier <- as.data.frame(outlier)
-outlier$color <- as.factor(ifelse(mse_try$rf_mal >= 93 ,"over","under"))
-quantile(outlier, 0.95)
-
-
 #### visualizing cutoff 
-qqplot(qchisq(ppoints(1204), df = 2), mse_try$rf_mal,
+qqplot(qchisq(ppoints(1204), df = 2), mse$rf_mal,
        main = expression("Q-Q plot of Mahalanobis" * ~outlier^2 *
                          " vs. quantiles of" * ~ chi[2]^2),xlab = "Chi-Square",ylab = "Mahalanobis")
+
+try <- cbind(qchisq(ppoints(1204), df = 2), sort(mse$rf_mal))
+try <- as.data.frame(try)
+try %>% filter(V1 > 13.82)
+# find outliers
+outlier <- mse$rf_mal
+outlier <- as.data.frame(outlier)
+quantile(outlier$outlier,.95)
+outlier$color <- as.factor(ifelse(mse$rf_mal >= 149 ,"over","under"))
+
 
 ```
 
@@ -58,18 +72,95 @@ qqplot(qchisq(ppoints(1204), df = 2), mse_try$rf_mal,
 #___________________________________________________________________________________________________
 #### VISUALIZING OUTLIERS 
 #___________________________________________________________________________________________________
-outlier %>% ggplot(aes(sqrt(outlier), fill=color)) + geom_histogram() + theme_minimal() +labs(x = "Distance Between True and Predicted Blood Pressure") + guides(fill=guide_legend(title="95 Percentile"))
+outlier %>% ggplot(aes(sqrt(outlier), fill=color)) + geom_histogram() + theme_minimal() +labs(x = "Distance Between True and Predicted Blood Pressure") + guides(fill=guide_legend(title="95 Percentile")) +
+  theme(axis.text=element_text(size=20), axis.title=element_text(size=20,face="bold"),legend.text=element_text(size=20),legend.title = element_text(size=20)) 
+```
+
+
+```{r}
+#___________________________________________________________________________________________________
+#### Testing Cut-off
+####___________________________________________________________________________________________________
+###Test
+predicted <- cbind(mse$rf_pred_sys, mse$rf_pred_dia)
+first <- cbind(lin_frame_test_bp$bpxsy1, lin_frame_test_bp$bpxdi1)
+first_to_pred <- mahalanobis(predicted, first, cov(predicted,first))
+
+
+###looking at classifcations over 
+lin_frame_test_bp$fist_to_pred <- first_to_pred
+lin_frame_test_bp$color <- as.factor(ifelse(mse$rf_mal >= 149 ,"over","under"))
+class_out <- lin_frame_test_bp %>% select(bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3,color) %>% filter(color == "over")
+class_out$dia_mean <- rowMeans(class_out[,c("bpxdi2","bpxdi3")])
+class_out$sys_mean <- rowMeans(class_out[,c("bpxsy2","bpxsy3")])
+class_out$bpxsy2 <- NULL 
+class_out$bpxsy3 <- NULL
+class_out$bpxdi2 <- NULL
+class_out$bpxdi3 <- NULL
+class_out$color <- NULL 
+class_out <- subset(class_out, select=c(4,1,3,2))
+
+#### summary statistic 
+class_out$sys_error <- (class_out$sys_mean - class_out$bpxsy1)^2
+class_out$di_error <- (class_out$dia_mean - class_out$bpxdi1)^2
+sqrt(mean(class_out$sys_error))
+sqrt(mean(class_out$di_error))
+
+
+### malahonbis distance 
+mal_true <- cbind(class_out$sys_mean,class_out$dia_mean)
+mal_first <- cbind(class_out$bpxsy1,class_out$bpxdi1)
+class_out$mal <- mahalanobis(mal_true, mal_first, cov(mal_true,mal_first))
+sqrt(mean(class_out$mal))
+
+
+
+###looking at classifcations over 
+class_out <- lin_frame_test_bp %>% select(bpxsy1,bpxsy2,bpxsy3,bpxdi1,bpxdi2,bpxdi3,color) %>% filter(color == "under")
+class_out$dia_mean <- rowMeans(class_out[,c("bpxdi2","bpxdi3")])
+class_out$sys_mean <- rowMeans(class_out[,c("bpxsy2","bpxsy3")])
+class_out$bpxsy2 <- NULL 
+class_out$bpxsy3 <- NULL
+class_out$bpxdi2 <- NULL
+class_out$bpxdi3 <- NULL
+class_out$color <- NULL 
+class_out <- subset(class_out, select=c(4,1,3,2))
+
+#### summary statistic 
+class_out$sys_error <- (class_out$sys_mean - class_out$bpxsy1)^2
+class_out$di_error <- (class_out$dia_mean - class_out$bpxdi1)^2
+sqrt(mean(class_out$sys_error))
+sqrt(mean(class_out$di_error))
+
+
+### malahonbis distance 
+mal_true <- cbind(class_out$sys_mean,class_out$dia_mean)
+mal_first <- cbind(class_out$bpxsy1,class_out$bpxdi1)
+class_out$mal <- mahalanobis(mal_true, mal_first, cov(mal_true,mal_first))
+sqrt(mean(class_out$mal))
 ```
 
 
 
-
 ```{r}
+    ###sys 
     linear = lm(sys_mean~ridageyr+bmxwt,lin_frame_clean)
-    prediction_frame <- data.frame(ridageyr = 40,bmxwt = 50)
-    prediction <- predict(linear, newdata = prediction_frame)
-    prediction <- as.data.frame(prediction)
-    observed <- data.frame(number = 100)
-    distance <- mahalanobis(prediction, observed, cov(prediction,observed))
+    prediction_frame <- data.frame(ridageyr = 40,bmxwt = 70)
+    prediction_sys <- predict(linear, prediction_frame)
+    
+    
+    ###dia 
+    linear = lm(dia_mean~ridageyr+bmxwt,lin_frame_clean)
+    prediction_frame <- data.frame(ridageyr = 40,bmxwt = 70)
+    prediction_dia <- predict(linear, newdata = prediction_frame)
+    
+    ##distnace
+    prediction <- data.frame(preds = prediction_sys,predd = prediction_dia)
+    observed <- data.frame(systolic = 100,diastolic = 100)
+    a <- cbind(observed$systolic, observed$diastolic) 
+    b <- cbind(prediction$preds, prediction$predd)
+    
+    tryer <- mahalanobis(a, b, cov(a,b))
+    tryer
 ```
 

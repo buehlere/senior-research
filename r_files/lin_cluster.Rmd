@@ -8,14 +8,13 @@ The purpose of this .Rmd is to build linear models for both systolic and diastol
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(caret) 
 library(ggplot2)
 library(dplyr)
 library(readr)
-library(Hmisc)
-library(ggfortify)
-library(rpart.plot)
-library(clustMixType)
+library(matrixStats)
+library(reshape2)
+library(car) 
+
 
 knitr::opts_knit$set(root.dir = normalizePath("C:/Users/buehl/Documents/classes/senior-research"))
 ```
