@@ -64,7 +64,7 @@ ggplot(sys_imp, aes(y=Overall, x=reorder(X1,Overall),fill="red")) +
   coord_flip()  + 
   theme_minimal() + 
   scale_fill_discrete(guide=FALSE) + 
-  scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) +   labs(x="Predictor", y="Importance to Systolic") +
+  scale_x_discrete(labels=c("Asian","Hispanic","White","LDL Chol.","HDL Chol.","Diabetes","Cholesterol","Black","Leg Circum.","Lower Arm Circum.","Gender","Glucose","Abdomin Circum.","Upper Arm Circum.", "Height","BMI","Hypertension Med.","Waist Circum.","Weight","Hypertension","Age")) +   labs(x="Predictor", y="Importance to Systolic Pressure") +
   theme(axis.text=element_text(size=20), axis.title=element_text(size=20)) 
 ```
 

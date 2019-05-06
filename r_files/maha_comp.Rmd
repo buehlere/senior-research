@@ -142,25 +142,3 @@ sqrt(mean(class_out$mal))
 
 
 
-```{r}
-    ###sys 
-    linear = lm(sys_mean~ridageyr+bmxwt,lin_frame_clean)
-    prediction_frame <- data.frame(ridageyr = 40,bmxwt = 70)
-    prediction_sys <- predict(linear, prediction_frame)
-    
-    
-    ###dia 
-    linear = lm(dia_mean~ridageyr+bmxwt,lin_frame_clean)
-    prediction_frame <- data.frame(ridageyr = 40,bmxwt = 70)
-    prediction_dia <- predict(linear, newdata = prediction_frame)
-    
-    ##distnace
-    prediction <- data.frame(preds = prediction_sys,predd = prediction_dia)
-    observed <- data.frame(systolic = 100,diastolic = 100)
-    a <- cbind(observed$systolic, observed$diastolic) 
-    b <- cbind(prediction$preds, prediction$predd)
-    
-    tryer <- mahalanobis(a, b, cov(a,b))
-    tryer
-```
-
