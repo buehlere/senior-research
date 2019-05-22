@@ -1,14 +1,26 @@
-
+#___________________________________________________________________________________________________
+#### The Purpose of this file is to demonstrate the 
+#### tool built for this study. To run, make sure 
+#### R-Shiny is downloaded to your computer and make 
+#### sure your direcotry is set to the App-1 folder that 
+#### the app came in. Hopefully, this application will 
+#### be soon avaliable. 
+#___________________________________________________________________________________________________
 
 library(shiny)
 library(caret)
-library(readr)
+library(dplyr)
 library(ggplot2)
-
+library(readr)
+library(randomForest)
+library(rsconnect)
+###navigate to App-1 folder
+#setwd("~/classes/senior-research/r_files/App-1")
 load("RandomForestDia.rda")
 load("RandomForestSys.rda")
-mse <- read_csv("mse.csv")
+mse <- read.csv("mse.csv")
 
+####BUILDING UI 
 ui <- fluidPage(
   h1("Please Enter Patient Information:"),
   sliderInput(inputId = "Age",label = "Enter Age (yrs.)", 
@@ -79,7 +91,7 @@ ui <- fluidPage(
 server <- function(input,output) {
   
   statement <- reactive({
-    ###sys 
+    ###BUILDING PREDICTION FRAME 
     prediction_frame <- data.frame(ridageyr = input$Age, 
                                    bmxwt = input$Weight, 
                                    bmxwaist = input$Waist, 
@@ -101,7 +113,7 @@ server <- function(input,output) {
                                    black = 0, 
                                    asian = 0,
                                    hispanic = 0)
-    
+
     ###Medical Dummies 
     prediction_frame$riagendr <- ifelse(prediction_frame$riagendr == "Male",1,0)
     prediction_frame$bpq020 <- ifelse(prediction_frame$bpq020 == "Yes",1,0)
@@ -125,7 +137,6 @@ server <- function(input,output) {
     ###information for the covariance matrix 
     mal_pred <- cbind(mse$rf_pred_dia,mse$rf_pred_sys)
     mal_true <- cbind(mse$true_dia,mse$true_sys)
-    
     ###distance calculation 
     distance <- ((observed - predicted) %*% solve(cov(mal_pred,mal_true)) %*% t((observed-predicted)))
     if(distance > 149)
@@ -135,11 +146,12 @@ server <- function(input,output) {
     {
       statement <- "VALID"
     }
+    ####READING RESPONSE 
     statement
     
   })
   output$status <- renderPrint({
-
+    ###DISPLAY READING 
     print(statement()) 
 
   }) 

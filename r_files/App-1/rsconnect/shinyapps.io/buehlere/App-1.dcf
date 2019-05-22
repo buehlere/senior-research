@@ -5,8 +5,9 @@ account: buehlere
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 912898
-bundleId: 2064542
+bundleId: 2102409
 url: https://buehlere.shinyapps.io/App-1/
-when: 1557168658.7181
+when: 1558554480.36801
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: .RData
